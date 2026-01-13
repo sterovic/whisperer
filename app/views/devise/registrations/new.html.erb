@@ -1,0 +1,144 @@
+<% content_for :title, "Sign Up - Whisperer" %>
+
+<h3 class="mt-8 text-center text-xl font-semibold md:mt-12 lg:mt-24">Register</h3>
+<h3 class="text-base-content/70 mt-2 text-center text-sm">
+  Seamless Access, Secure Connection: Your Gateway to a Personalized
+  Experience.
+</h3>
+
+<%= form_with model: resource, as: resource_name, url: registration_path(resource_name), html: { class: "mt-6 md:mt-10", data: { controller: "password-strength" } } do |f| %>
+  <%= render "devise/shared/error_messages", resource: resource %>
+
+  <div class="grid grid-cols-1 gap-x-4 xl:grid-cols-2">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">First Name</legend>
+      <%= f.label :first_name, class: "input w-full focus:outline-0" do %>
+        <span class="iconify lucide--user text-base-content/80 size-5"></span>
+        <%= f.text_field :first_name, autofocus: true, class: "grow focus:outline-0", placeholder: "First Name", required: true %>
+      <% end %>
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Last Name</legend>
+      <%= f.label :last_name, class: "input w-full focus:outline-0" do %>
+        <span class="iconify lucide--user text-base-content/80 size-5"></span>
+        <%= f.text_field :last_name, autofocus: true, class: "grow focus:outline-0", placeholder: "Last Name", required: true %>
+      <% end %>
+    </fieldset>
+  </div>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Email Address</legend>
+    <%= f.label :email, class: "input w-full focus:outline-0" do %>
+      <span class="iconify lucide--mail text-base-content/80 size-5"></span>
+      <%= f.email_field :email,
+                        autofocus: true,
+                        autocomplete: "email",
+                        class: "grow focus:outline-0",
+                        placeholder: "Email Address" %>
+    <% end %>
+  </fieldset>
+
+  <fieldset class="fieldset" data-controller="toggle-password-visibility">
+    <legend class="fieldset-legend">Password</legend>
+    <%= f.label :password, class: "input w-full focus:outline-0" do %>
+      <span class="iconify lucide--key-round text-base-content/80 size-5"></span>
+      <%= f.password_field :password,
+                           autocomplete: "current-password",
+                           class: "grow focus:outline-0",
+                           data: {
+                             toggle_password_visibility_target: "input",
+                             password_strength_target: "password",
+                             action: "input->password-strength#checkStrength"
+                           },
+                           required: true,
+                           placeholder: "Password" %>
+      <label class="swap btn btn-xs btn-ghost btn-circle text-base-content/60">
+        <input
+          type="checkbox"
+          data-toggle-password-visibility-target="checkbox"
+          data-action="change->toggle-password-visibility#toggle"
+          aria-label="Show password"/>
+        <span class="iconify lucide--eye swap-off size-4"></span>
+        <span class="iconify lucide--eye-off swap-on size-4"></span>
+      </label>
+    <% end %>
+  </fieldset>
+
+  <!-- Password Requirements -->
+  <div class="mt-2 space-y-1 text-sm" data-password-strength-target="requirements">
+    <div class="flex items-center gap-2" data-requirement="length">
+      <span class="text-error">✗</span>
+      <span>At least 8 characters</span>
+    </div>
+    <div class="flex items-center gap-2" data-requirement="lowercase">
+      <span class="text-error">✗</span>
+      <span>One lowercase letter</span>
+    </div>
+    <div class="flex items-center gap-2" data-requirement="uppercase">
+      <span class="text-error">✗</span>
+      <span>One uppercase letter</span>
+    </div>
+    <div class="flex items-center gap-2" data-requirement="number">
+      <span class="text-error">✗</span>
+      <span>One number</span>
+    </div>
+    <div class="flex items-center gap-2" data-requirement="special">
+      <span class="text-error">✗</span>
+      <span>One special character (!@#$%^&*)</span>
+    </div>
+  </div>
+
+  <!-- Strength Bar -->
+  <div class="mt-2">
+    <div class="flex gap-1">
+      <div class="h-1.5 flex-1 rounded-xs bg-base-300" data-password-strength-target="strengthBar"></div>
+      <div class="h-1.5 flex-1 rounded-xs bg-base-300" data-password-strength-target="strengthBar"></div>
+      <div class="h-1.5 flex-1 rounded-xs bg-base-300" data-password-strength-target="strengthBar"></div>
+      <div class="h-1.5 flex-1 rounded-xs bg-base-300" data-password-strength-target="strengthBar"></div>
+    </div>
+    <p class="text-sm mt-1" data-password-strength-target="strengthText">Enter a password</p>
+  </div>
+
+  <!-- Password Confirmation Field -->
+  <fieldset class="fieldset" data-controller="toggle-password-visibility">
+    <legend class="fieldset-legend">Password</legend>
+    <%= f.label :password_confirmation, class: "input w-full focus:outline-0" do %>
+      <span class="iconify lucide--key-round text-base-content/80 size-5"></span>
+      <%= f.password_field :password_confirmation,
+                           autocomplete: "new-password",
+                           class: "grow focus:outline-0",
+                           data: { toggle_password_visibility_target: "input" },
+                           required: true,
+                           placeholder: "Confirm Password" %>
+      <label class="swap btn btn-xs btn-ghost btn-circle text-base-content/60">
+        <input
+          type="checkbox"
+          data-toggle-password-visibility-target="checkbox"
+          data-action="change->toggle-password-visibility#toggle"
+          aria-label="Show password"/>
+        <span class="iconify lucide--eye swap-off size-4"></span>
+        <span class="iconify lucide--eye-off swap-on size-4"></span>
+      </label>
+    <% end %>
+  </fieldset>
+
+  <div class="mt-4 flex items-center gap-3 md:mt-6">
+    <input
+      class="checkbox checkbox-sm checkbox-primary"
+      aria-label="Checkbox example"
+      id="agreement"
+      type="checkbox" />
+    <label for="agreement" class="text-sm">
+      I agree with
+      <span class="text-primary ms-1 cursor-pointer hover:underline">terms and conditions</span>
+    </label>
+  </div>
+  <%= f.button type: :submit, class: "btn btn-primary btn-wide mt-4 max-w-full gap-3 md:mt-6" do %>
+    <span class="iconify lucide--user-plus size-4"></span>
+    Sign Up
+  <% end %>
+  <p class="text-base-content/80 mt-4 text-center text-sm md:mt-6">
+    Already have an account?
+    <%= link_to "Login", new_session_path(resource_name), class: "text-primary ms-1 hover:underline" %>
+  </p>
+<% end %>

@@ -1,0 +1,15 @@
+<div class="mt-2 px-5">
+  <div class="dropdown dropdown-bottom dropdown-end w-full">
+    <%= render "shared/ui/project_switch_card", project: @current_project, active: true %>
+    <div tabindex="0"
+         class="dropdown-content bg-base-100 rounded-box mt-1 w-44 shadow-md transition-all hover:shadow-lg">
+      <ul class="menu w-full space-y-1 p-2">
+        <% @other_projects.each do |project| %>
+          <li>
+            <%= render "shared/ui/project_switch_card", project: project, active: false %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</div>

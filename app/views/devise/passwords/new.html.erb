@@ -1,0 +1,36 @@
+<% content_for :title, "Forgot Password - Whisperer" %>
+
+<h3 class="mt-8 text-center text-xl font-semibold md:mt-12 lg:mt-24">
+  Forgot Password
+</h3>
+<h3 class="text-base-content/70 mt-2 text-center text-sm">
+  Seamless Access, Secure Connection: Your Gateway to a Personalized
+  Experience.
+</h3>
+<%= form_with model: resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "mt-6 md:mt-10" } do |f| %>
+  <%= render "devise/shared/error_messages", resource: resource %>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Email Address</legend>
+    <%= f.label :email, class: "input w-full focus:outline-0" do %>
+      <span class="iconify lucide--mail text-base-content/80 size-5"></span>
+      <%= f.email_field :email,
+                        autofocus: true,
+                        autocomplete: "email",
+                        class: "grow focus:outline-0",
+                        placeholder: "Email Address" %>
+    <% end %>
+  </fieldset>
+  <%= f.button type: :submit, class: "btn btn-primary btn-wide mt-4 max-w-full gap-3 md:mt-6" do %>
+    <span class="iconify lucide--mail-plus size-4"></span>
+    Send Reset Instructions
+  <% end %>
+  <p class="text-base-content/80 mt-4 text-center text-sm md:mt-6">
+    Don't have an account?
+    <%= link_to "Create one here", new_registration_path(resource_name), class: "text-primary ms-1 hover:underline" %>
+  </p>
+  <p class="text-base-content/80 mt-4 text-center text-sm">
+    Already have an account?
+    <%= link_to "Sign in", new_session_path(resource_name), class: "text-primary hover:underline" %>
+  </p>
+<% end %>

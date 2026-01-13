@@ -1,0 +1,121 @@
+<% content_for :title, "Background Jobs - Whisperer" %>
+
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Background Jobs</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Background Jobs</h1>
+        <p class="text-base-content/60 text-sm mt-1">Manage and monitor background job execution</p>
+      </div>
+      <%= link_to good_job_path, class: "btn btn-primary gap-2", target: "_blank" do %>
+        <span class="iconify lucide--gauge size-4"></span>
+        Job Dashboard
+      <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6">
+    <!-- Manual Trigger Section -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-6">
+      <div class="flex items-start gap-3 mb-4">
+        <span class="iconify lucide--play-circle size-5 text-primary mt-0.5"></span>
+        <div class="flex-1">
+          <h2 class="text-lg font-semibold">Manual Job Triggers</h2>
+          <p class="text-sm text-base-content/60 mt-1">Trigger jobs manually for immediate execution</p>
+        </div>
+      </div>
+
+      <div class="divider my-4"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <%= button_to trigger_jobs_path({ job_class: ExampleSocialMediaJob }),
+            method: :post,
+            class: "btn btn-outline gap-2 justify-start",
+            data: { turbo_stream: true } do %>
+          <span class="iconify lucide--zap size-4"></span>
+          Run Example Social Media Job
+        <% end %>
+
+        <%= button_to trigger_jobs_path({ job_class: VideoSearchJob }),
+                      method: :post,
+                      class: "btn btn-outline gap-2 justify-start",
+                      data: { turbo_stream: true } do %>
+          <span class="iconify lucide--zap size-4"></span>
+          Run Video Search Job
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Scheduled Jobs Section -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-6">
+      <div class="flex items-start gap-3 mb-4">
+        <span class="iconify lucide--clock size-5 text-secondary mt-0.5"></span>
+        <div class="flex-1">
+          <h2 class="text-lg font-semibold">Scheduled Jobs</h2>
+          <p class="text-sm text-base-content/60 mt-1">Configure recurring job schedules</p>
+        </div>
+      </div>
+
+      <div class="divider my-4"></div>
+
+      <div class="overflow-x-auto">
+        <table class="table table-zebra">
+          <thead>
+            <tr>
+              <th>Job Name</th>
+              <th>Schedule</th>
+              <th>Next Run</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @scheduled_jobs.each do |job| %>
+              <tr>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <span class="iconify lucide--briefcase size-4 text-base-content/60"></span>
+                    <div>
+                      <div class="font-medium"><%= job[:name].humanize %></div>
+                      <div class="text-xs text-base-content/60"><%= job[:description] %></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <code class="bg-base-200 px-2 py-1 rounded text-xs"><%= job[:cron] %></code>
+                </td>
+                <td>
+                  <div class="badge badge-ghost badge-sm gap-1">
+                    <span class="iconify lucide--timer size-3"></span>
+                    <%= time_ago_in_words(job[:next_run]) %>
+                  </div>
+                </td>
+                <td class="text-right">
+                  <button class="btn btn-ghost btn-sm gap-1">
+                    <span class="iconify lucide--pencil size-3.5"></span>
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live Job Progress Container -->
+    <div id="job_progress_container" class="space-y-4">
+      <!-- Progress cards will be inserted here via Turbo Streams -->
+    </div>
+  </div>
+</div>
+
+<!-- Subscribe to job progress updates -->
+<%= turbo_stream_from "job_progress_#{current_user.id}" %>

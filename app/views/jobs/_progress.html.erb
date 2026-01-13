@@ -1,0 +1,36 @@
+<div id="job_<%= job_id %>" class="card bg-base-200 shadow-xl">
+  <div class="card-body">
+    <h3 class="card-title">
+      Job Progress
+      <% if status == :running %>
+        <span class="loading loading-spinner loading-sm"></span>
+      <% elsif status == :completed %>
+        <span class="badge badge-success">Completed</span>
+      <% elsif status == :failed %>
+        <span class="badge badge-error">Failed</span>
+      <% end %>
+    </h3>
+
+    <p class="text-sm"><%= message %></p>
+
+    <!-- Progress Bar -->
+    <div class="w-full">
+      <div class="flex justify-between text-sm mb-1">
+        <span>Step <%= step %> of <%= total_steps %></span>
+        <span><%= percentage %>%</span>
+      </div>
+      <progress
+        class="progress <%= status == :completed ? 'progress-success' : status == :failed ? 'progress-error' : 'progress-primary' %> w-full"
+        value="<%= percentage %>"
+        max="100">
+      </progress>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card-actions justify-end mt-4">
+      <% if status == :completed || status == :failed %>
+        <button class="btn btn-sm btn-ghost" onclick="this.closest('.card').remove()">Dismiss</button>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,158 @@
+<% content_for :title, "Edit Profile - Whisperer" %>
+
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span>Settings</span>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Profile</span>
+    </div>
+    <h1 class="text-2xl font-bold">Edit Profile</h1>
+    <p class="text-base-content/60 text-sm mt-1">Manage your personal information and password</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Profile Info Card -->
+    <div class="lg:col-span-2">
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <%= render "shared/flash_messages" %>
+        <%= form_with model: resource, as: resource_name, url: registration_path(resource_name), html: { method: :put } do |f| %>
+          <%= render "devise/shared/error_messages", resource: resource %>
+
+          <!-- Personal Information -->
+          <div>
+            <h3 class="text-lg font-semibold mb-4">Personal Information</h3>
+            <div class="grid grid-cols-1 gap-x-4 xl:grid-cols-2">
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">First Name</legend>
+                <%= f.label :first_name, class: "input w-full focus:outline-0" do %>
+                  <span class="iconify lucide--user text-base-content/80 size-5"></span>
+                  <%= f.text_field :first_name, autofocus: true, class: "grow focus:outline-0", placeholder: "First Name", required: true %>
+                <% end %>
+              </fieldset>
+
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Last Name</legend>
+                <%= f.label :last_name, class: "input w-full focus:outline-0" do %>
+                  <span class="iconify lucide--user text-base-content/80 size-5"></span>
+                  <%= f.text_field :last_name, class: "grow focus:outline-0", placeholder: "Last Name", required: true %>
+                <% end %>
+              </fieldset>
+            </div>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Email Address</legend>
+              <%= f.label :email, class: "input w-full focus:outline-0" do %>
+                <span class="iconify lucide--mail text-base-content/80 size-5"></span>
+                <%= f.email_field :email, autocomplete: "email", class: "grow focus:outline-0", placeholder: "Email Address" %>
+              <% end %>
+              <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
+                <p class="text-sm text-warning mt-2">Currently waiting confirmation for: <%= resource.unconfirmed_email %></p>
+              <% end %>
+            </fieldset>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Security -->
+          <div>
+            <h3 class="text-lg font-semibold mb-2">Change Password</h3>
+            <p class="text-sm text-base-content/60 mb-4">Leave blank if you don't want to change your password</p>
+
+            <fieldset class="fieldset" data-controller="toggle-password-visibility">
+              <legend class="fieldset-legend">New Password</legend>
+              <%= f.label :password, class: "input w-full focus:outline-0" do %>
+                <span class="iconify lucide--key-round text-base-content/80 size-5"></span>
+                <%= f.password_field :password,
+                                     autocomplete: "new-password",
+                                     class: "grow focus:outline-0",
+                                     data: { toggle_password_visibility_target: "input" },
+                                     placeholder: "New Password" %>
+                <label class="swap btn btn-xs btn-ghost btn-circle text-base-content/60">
+                  <input
+                    type="checkbox"
+                    data-toggle-password-visibility-target="checkbox"
+                    data-action="change->toggle-password-visibility#toggle"
+                    aria-label="Show password"/>
+                  <span class="iconify lucide--eye swap-off size-4"></span>
+                  <span class="iconify lucide--eye-off swap-on size-4"></span>
+                </label>
+              <% end %>
+            </fieldset>
+
+            <fieldset class="fieldset" data-controller="toggle-password-visibility">
+              <legend class="fieldset-legend">Confirm New Password</legend>
+              <%= f.label :password_confirmation, class: "input w-full focus:outline-0" do %>
+                <span class="iconify lucide--key-round text-base-content/80 size-5"></span>
+                <%= f.password_field :password_confirmation,
+                                     autocomplete: "new-password",
+                                     class: "grow focus:outline-0",
+                                     data: { toggle_password_visibility_target: "input" },
+                                     placeholder: "Confirm New Password" %>
+                <label class="swap btn btn-xs btn-ghost btn-circle text-base-content/60">
+                  <input
+                    type="checkbox"
+                    data-toggle-password-visibility-target="checkbox"
+                    data-action="change->toggle-password-visibility#toggle"
+                    aria-label="Show password"/>
+                  <span class="iconify lucide--eye swap-off size-4"></span>
+                  <span class="iconify lucide--eye-off swap-on size-4"></span>
+                </label>
+              <% end %>
+            </fieldset>
+
+            <fieldset class="fieldset" data-controller="toggle-password-visibility">
+              <legend class="fieldset-legend">Current Password <span class="text-error">*</span></legend>
+              <%= f.label :current_password, class: "input w-full focus:outline-0" do %>
+                <span class="iconify lucide--lock text-base-content/80 size-5"></span>
+                <%= f.password_field :current_password,
+                                     autocomplete: "current-password",
+                                     class: "grow focus:outline-0",
+                                     data: { toggle_password_visibility_target: "input" },
+                                     required: true,
+                                     placeholder: "Current Password" %>
+                <label class="swap btn btn-xs btn-ghost btn-circle text-base-content/60">
+                  <input
+                    type="checkbox"
+                    data-toggle-password-visibility-target="checkbox"
+                    data-action="change->toggle-password-visibility#toggle"
+                    aria-label="Show password"/>
+                  <span class="iconify lucide--eye swap-off size-4"></span>
+                  <span class="iconify lucide--eye-off swap-on size-4"></span>
+                </label>
+              <% end %>
+              <p class="text-sm text-base-content/50 mt-2">* Required to save any changes</p>
+            </fieldset>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <%= f.submit "Save Changes", class: "btn btn-primary" %>
+            <%= link_to "Cancel", :back, class: "btn btn-ghost" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Danger Zone Card -->
+    <div class="lg:col-span-1">
+      <div class="bg-base-100 rounded-box border border-error/20 p-6">
+        <div class="flex items-start gap-3">
+          <span class="iconify lucide--alert-triangle size-5 text-error flex-shrink-0 mt-0.5"></span>
+          <div class="flex-1">
+            <h3 class="font-semibold text-error mb-1">Danger Zone</h3>
+            <p class="text-sm text-base-content/60 mb-4">Permanently delete your account and all associated data</p>
+            <%= button_to "Delete Account",
+                registration_path(resource_name),
+                data: { confirm: "Are you sure? This action cannot be undone and will permanently delete your account and all associated data.", turbo_method: :delete },
+                class: "btn btn-error btn-sm btn-outline w-full" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

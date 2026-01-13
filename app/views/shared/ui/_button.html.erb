@@ -1,0 +1,52 @@
+<%
+  variant ||= "primary" # primary, secondary, danger, ghost
+  size ||= "md" # sm, md, lg
+  type ||= "button"
+  disabled ||= false
+  full_width ||= false
+  icon ||= nil
+  text ||= "Button"
+  href ||= nil
+%>
+
+<%
+  base_classes = "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2"
+
+  variant_classes = {
+    "primary" => "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 disabled:bg-indigo-400",
+    "secondary" => "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500 disabled:bg-gray-100",
+    "danger" => "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400",
+    "ghost" => "text-gray-700 hover:bg-gray-100 focus:ring-gray-500"
+  }
+
+  size_classes = {
+    "sm" => "px-3 py-1.5 text-xs",
+    "md" => "px-4 py-2 text-sm",
+    "lg" => "px-6 py-3 text-base"
+  }
+
+  classes = "#{base_classes} #{variant_classes[variant]} #{size_classes[size]} #{full_width ? 'w-full' : ''} #{disabled ? 'cursor-not-allowed opacity-60' : ''}"
+%>
+
+<% if href %>
+  <a href="<%= href %>" class="<%= classes %>">
+    <% if icon %>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <%= icon %>
+      </svg>
+    <% end %>
+    <%= text %>
+  </a>
+<% else %>
+  <button
+    type="<%= type %>"
+    <%= "disabled" if disabled %>
+    class="<%= classes %>">
+    <% if icon %>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <%= icon %>
+      </svg>
+    <% end %>
+    <%= text %>
+  </button>
+<% end %>
