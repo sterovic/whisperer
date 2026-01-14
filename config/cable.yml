@@ -5,9 +5,4 @@ test:
   adapter: test
 
 production:
-  adapter: redis
-  # Heroku Redis uses REDIS_TLS_URL for SSL connections
-  url: <%= ENV.fetch("REDIS_TLS_URL") { ENV.fetch("REDIS_URL", "redis://localhost:6379/1") } %>
-  channel_prefix: whisperer_production
-  # SSL configuration for Heroku Redis
-  ssl_params: { verify_mode: <%= OpenSSL::SSL::VERIFY_NONE %> }
+  adapter: postgresql
