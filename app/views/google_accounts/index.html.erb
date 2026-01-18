@@ -1,0 +1,141 @@
+<% content_for :title, "Google Accounts - Whisperer" %>
+
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Google Accounts</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Google Accounts</h1>
+        <p class="text-base-content/60 text-sm mt-1">Manage your connected YouTube accounts for API access</p>
+      </div>
+      <%= link_to authorize_google_accounts_path, data: { turbo_prefetch: false }, class: "btn btn-primary gap-2" do %>
+        <span class="iconify lucide--plus size-4"></span>
+        Connect Account
+      <% end %>
+    </div>
+  </div>
+
+  <% if @google_accounts.empty? %>
+    <!-- Empty State -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
+      <span class="iconify lucide--user-circle size-16 text-base-content/30 mx-auto mb-4"></span>
+      <h3 class="text-lg font-semibold mb-2">No accounts connected</h3>
+      <p class="text-base-content/60 mb-6">Connect a Google account to access YouTube data and features.</p>
+      <%= link_to authorize_google_accounts_path, data: { turbo_prefetch: false }, class: "btn btn-primary gap-2" do %>
+        <span class="iconify lucide--plus size-4"></span>
+        Connect Your First Account
+      <% end %>
+    </div>
+  <% else %>
+    <!-- Accounts Table -->
+    <div class="bg-base-100 rounded-box border border-base-300 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+          <tr class="bg-base-200">
+            <th>Account</th>
+            <th>Google ID</th>
+            <th>YouTube Handle</th>
+            <th>Connected</th>
+            <th>Token Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% @google_accounts.each do |account| %>
+            <tr class="hover">
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="avatar">
+                    <% if account.avatar_url.present? %>
+                      <div class="w-10 rounded-full">
+                        <%= image_tag account.avatar_url,
+                                      'referrerpolicy': "no-referrer",
+                                      alt: account.name, class: "rounded-full"
+                        %>
+                      </div>
+                    <% else %>
+                      <div class="bg-primary text-primary-content rounded-full w-10 flex items-center justify-center">
+                        <span class="text-sm"><%= account.name&.first&.upcase || account.email&.first&.upcase %></span>
+                      </div>
+                    <% end %>
+                  </div>
+                  <div>
+                    <div class="font-medium"><%= account.name %></div>
+                    <div class="text-sm text-base-content/60"><%= account.email %></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <code class="bg-base-200 px-2 py-1 rounded text-xs"><%= account.google_id.truncate(20) %></code>
+              </td>
+              <td>
+                <% if account.youtube_handle.present? %>
+                    <span class="badge badge-ghost gap-1">
+                      <span class="iconify lucide--at-sign size-3"></span>
+                      <%= account.youtube_handle %>
+                    </span>
+                <% elsif account.youtube_channel_id.present? %>
+                  <span class="text-base-content/60 text-sm">Channel linked</span>
+                <% else %>
+                  <span class="text-base-content/40 text-sm">No channel</span>
+                <% end %>
+              </td>
+              <td>
+                <div class="text-sm">
+                  <%= time_ago_in_words(account.created_at) %> ago
+                </div>
+              </td>
+              <td>
+                <% if account.token_expired? %>
+                    <span class="badge badge-warning badge-sm gap-1">
+                      <span class="iconify lucide--alert-triangle size-3"></span>
+                      Expired
+                    </span>
+                <% else %>
+                    <span class="badge badge-success badge-sm gap-1">
+                      <span class="iconify lucide--check size-3"></span>
+                      Active
+                    </span>
+                <% end %>
+              </td>
+              <td class="text-right">
+                <%= button_to google_account_path(account),
+                              method: :delete,
+                              class: "btn btn-ghost btn-sm text-error gap-1",
+                              data: { turbo_confirm: "Are you sure you want to disconnect this Google account?" } do %>
+                  <span class="iconify lucide--unlink size-4"></span>
+                  Disconnect
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Info Card -->
+  <div class="mt-6 bg-base-100 rounded-box border border-base-300 p-6">
+    <div class="flex items-start gap-3">
+      <span class="iconify lucide--info size-5 text-info mt-0.5"></span>
+      <div>
+        <h3 class="font-semibold mb-2">About Google Account Authorization</h3>
+        <ul class="text-sm text-base-content/70 space-y-1 list-disc list-inside">
+          <li>Connected accounts allow access to YouTube data via the YouTube Data API</li>
+          <li>We request read-only access to your YouTube account and basic profile info</li>
+          <li>Tokens are automatically refreshed when needed</li>
+          <li>You can disconnect an account at any time</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

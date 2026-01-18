@@ -1,0 +1,126 @@
+<% content_for :title, "Import Videos - Whisperer" %>
+
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <%= link_to "Videos", videos_path, class: "hover:text-base-content transition-colors" %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Import</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Import YouTube Videos</h1>
+        <p class="text-base-content/60 text-sm mt-1">Add videos to your project by pasting YouTube URLs</p>
+      </div>
+      <%= link_to videos_path, class: "btn btn-ghost gap-2" do %>
+        <span class="iconify lucide--arrow-left size-4"></span>
+        Back to Videos
+      <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Import Form -->
+    <div class="lg:col-span-2">
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="iconify lucide--youtube size-5 text-error mt-0.5"></span>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold">Paste YouTube URLs</h2>
+            <p class="text-sm text-base-content/60 mt-1">
+              Enter one URL per line. Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/...
+            </p>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <% if current_project.nil? %>
+          <div class="alert alert-warning mb-4">
+            <span class="iconify lucide--alert-triangle size-5"></span>
+            <span>Please select a project before importing videos.</span>
+          </div>
+        <% end %>
+
+        <%= form_with url: import_videos_path, method: :post, data: { turbo_stream: true } do |f| %>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">YouTube URLs</span>
+              <span class="label-text-alt text-base-content/60">One URL per line</span>
+            </label>
+            <%= f.text_area :urls,
+                rows: 10,
+                class: "textarea textarea-bordered font-mono text-sm",
+                placeholder: "https://www.youtube.com/watch?v=dQw4w9WgXcQ\nhttps://youtu.be/dQw4w9WgXcQ\nhttps://www.youtube.com/embed/dQw4w9WgXcQ",
+                disabled: current_project.nil? %>
+          </div>
+
+          <div class="form-control mt-6">
+            <%= f.submit "Import Videos",
+                class: "btn btn-primary gap-2",
+                disabled: current_project.nil? %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="lg:col-span-1">
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="iconify lucide--info size-5 text-info mt-0.5"></span>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold">How It Works</h2>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="space-y-4 text-sm">
+          <div class="flex gap-3">
+            <span class="badge badge-primary badge-sm">1</span>
+            <p>Paste YouTube video URLs, one per line</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="badge badge-primary badge-sm">2</span>
+            <p>Click "Import Videos" to start fetching</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="badge badge-primary badge-sm">3</span>
+            <p>Watch the progress as videos are imported</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="badge badge-primary badge-sm">4</span>
+            <p>View imported videos in your library</p>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="text-sm text-base-content/60">
+          <p class="font-medium mb-2">Imported data includes:</p>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Video title and description</li>
+            <li>Thumbnail image</li>
+            <li>Like count</li>
+            <li>Comment count</li>
+            <li>Channel information</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Job Progress Container -->
+  <div id="job_progress_container" class="mt-6 space-y-4">
+    <!-- Progress cards will be inserted here via Turbo Streams -->
+  </div>
+</div>
+
+<!-- Subscribe to job progress updates -->
+<%= turbo_stream_from "job_progress_#{current_user.id}" %>

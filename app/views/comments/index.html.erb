@@ -1,0 +1,113 @@
+<% content_for :title, "Comments - Whisperer" %>
+
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Comments</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Comments</h1>
+        <p class="text-base-content/60 text-sm mt-1">
+          <% if current_project %>
+            <%= pluralize(@comments.total_count, "comment") %> in <%= current_project.name %>
+          <% else %>
+            Select a project to view comments
+          <% end %>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <% if current_project.nil? %>
+    <div class="alert alert-warning">
+      <span class="iconify lucide--alert-triangle size-5"></span>
+      <span>Please select a project to view and manage comments.</span>
+    </div>
+  <% elsif @comments.empty? %>
+    <!-- Empty State -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
+      <span class="iconify lucide--message-circle-off size-16 text-base-content/30 mx-auto mb-4"></span>
+      <h3 class="text-lg font-semibold mb-2">No comments yet</h3>
+      <p class="text-base-content/60 mb-6">Comments will appear here after importing videos and posting comments.</p>
+      <%= link_to import_videos_path, class: "btn btn-primary gap-2" do %>
+        <span class="iconify lucide--plus size-4"></span>
+        Import Videos
+      <% end %>
+    </div>
+  <% else %>
+    <!-- Last Update Info -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-4 mb-4" id="last_update_info">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="iconify lucide--refresh-cw size-5 text-base-content/60 shrink-0"></span>
+          <div>
+            <span class="text-sm font-medium">Status Check</span>
+            <% if @status_check_schedule&.last_run_at %>
+              <span class="text-sm text-base-content/60 ml-2">
+                Last updated <%= time_ago_in_words(@status_check_schedule.last_run_at) %> ago
+              </span>
+            <% else %>
+              <span class="text-sm text-base-content/40 ml-2">Never checked</span>
+            <% end %>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <% if @status_check_schedule&.enabled? %>
+            <span class="badge badge-success badge-sm gap-1 whitespace-nowrap">
+              <span class="iconify lucide--check size-3 shrink-0"></span>
+              Auto-updating every <%= @status_check_schedule.interval_minutes %> min
+            </span>
+          <% else %>
+            <span class="badge badge-ghost badge-sm gap-1 whitespace-nowrap">
+              <span class="iconify lucide--pause-circle size-3 shrink-0"></span>
+              Auto-update disabled
+            </span>
+            <%= link_to jobs_path, class: "btn btn-xs btn-outline gap-1 whitespace-nowrap" do %>
+              <span class="iconify lucide--settings size-3 shrink-0"></span>
+              Configure
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments Table -->
+    <div class="bg-base-100 rounded-box border border-base-300 overflow-x-auto">
+      <table class="table table-zebra">
+        <thead>
+        <tr class="bg-base-200">
+          <th class="w-1/4">Comment</th>
+          <th>Video</th>
+          <th>Posted As</th>
+          <th>Status</th>
+          <th class="text-center">Likes</th>
+          <th class="text-center">Rank</th>
+          <th>Posted</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody id="comments_table_body">
+        <% @comments.each do |comment| %>
+          <%= render "comments/comment_row", comment: comment %>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex justify-center">
+      <%= paginate @comments, theme: 'default' %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Subscribe to comment updates for this project -->
+<% if current_project %>
+  <%= turbo_stream_from "project_#{current_project.id}_comments" %>
+<% end %>

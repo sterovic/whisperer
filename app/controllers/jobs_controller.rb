@@ -2,22 +2,54 @@ class JobsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # Show available jobs and their schedules
-    @scheduled_jobs = fetch_scheduled_jobs
+    # Ensure job schedules exist
+    JobSchedule.for("CommentStatusCheckJob")
+    JobSchedule.for("CommentPostingJob")
+
+    @job_schedules = JobSchedule.order(:job_class)
   end
 
   def trigger
-    # Manually trigger a job
-    job = (Object.const_get params[:job_class]).perform_later(current_user.id)
+    job_class = params[:job_class].safe_constantize
 
-    # Render initial progress card
+    unless job_class && job_class < ApplicationJob
+      redirect_to jobs_path, alert: "Invalid job class"
+      return
+    end
+
+    job = case job_class.name
+    when "CommentPostingJob"
+      unless current_project
+        render turbo_stream: turbo_stream.append(
+          "job_progress_container",
+          partial: "jobs/progress",
+          locals: {
+            job_id: SecureRandom.uuid,
+            job_name: "Comment Posting",
+            step: 0,
+            total_steps: 1,
+            message: "Error: Please select a project first",
+            percentage: 0,
+            status: :failed
+          }
+        )
+        return
+      end
+      job_class.perform_later(current_user.id, current_project.id)
+    else
+      job_class.perform_later(current_user.id)
+    end
+
+    job_name = job_class.name.underscore.humanize
+
     render turbo_stream: turbo_stream.append(
       "job_progress_container",
       partial: "jobs/progress",
       locals: {
         job_id: job.job_id,
+        job_name: job_name,
         step: 0,
-        total_steps: 5,
+        total_steps: 1,
         message: "Job queued...",
         percentage: 0,
         status: :running
@@ -43,6 +75,11 @@ class JobsController < ApplicationController
   end
 
   private
+
+  def current_project
+    current_user.current_project
+  end
+  helper_method :current_project
 
   def fetch_scheduled_jobs
     # In a real app, fetch from database

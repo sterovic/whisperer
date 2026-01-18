@@ -27,3 +27,6 @@ application.register(
   "toggle-password-visibility",
   TogglePasswordVisibilityController,
 );
+
+import CollapsibleController from "./collapsible_controller";
+application.register("collapsible", CollapsibleController);

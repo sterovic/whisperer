@@ -31,11 +31,23 @@ gem "devise", "~> 4.9"
 # PostgreSQL-backed ActiveJob adapter [https://github.com/bensheldon/good_job]
 gem "good_job", "~> 4.5"
 
+# YouTube API client [https://github.com/nullscreen/yt]
+gem "yt", "~> 0.34"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
+
+# HTTP client [https://github.com/httprb/http]
+gem "http", "~> 5.0"
+
+# OpenAI API client [https://github.com/openai/openai-ruby]
+gem "openai"
+
+# Pagination [https://github.com/kaminari/kaminari]
+gem "kaminari", "~> 1.2"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
