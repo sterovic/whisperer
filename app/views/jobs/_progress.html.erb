@@ -1,7 +1,7 @@
 <div id="job_<%= job_id %>" class="card bg-base-200 shadow-xl">
   <div class="card-body">
     <h3 class="card-title">
-      Job Progress
+      <%= local_assigns[:job_name] || "Job Progress" %>
       <% if status == :running %>
         <span class="loading loading-spinner loading-sm"></span>
       <% elsif status == :completed %>

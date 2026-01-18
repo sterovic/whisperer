@@ -1,0 +1,119 @@
+<% content_for :title, "Videos - Whisperer" %>
+
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Videos</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Videos</h1>
+        <p class="text-base-content/60 text-sm mt-1">
+          <% if current_project %>
+            <%= pluralize(@videos.count, "video") %> in <%= current_project.name %>
+          <% else %>
+            Select a project to view videos
+          <% end %>
+        </p>
+      </div>
+      <%= link_to import_videos_path, class: "btn btn-primary gap-2" do %>
+        <span class="iconify lucide--plus size-4"></span>
+        Import Videos
+      <% end %>
+    </div>
+  </div>
+
+  <% if current_project.nil? %>
+    <div class="alert alert-warning">
+      <span class="iconify lucide--alert-triangle size-5"></span>
+      <span>Please select a project to view and manage videos.</span>
+    </div>
+  <% elsif @videos.empty? %>
+    <!-- Empty State -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
+      <span class="iconify lucide--video-off size-16 text-base-content/30 mx-auto mb-4"></span>
+      <h3 class="text-lg font-semibold mb-2">No videos yet</h3>
+      <p class="text-base-content/60 mb-6">Import YouTube videos to get started with your project.</p>
+      <%= link_to import_videos_path, class: "btn btn-primary gap-2" do %>
+        <span class="iconify lucide--plus size-4"></span>
+        Import Your First Videos
+      <% end %>
+    </div>
+  <% else %>
+    <!-- Videos Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <% @videos.each do |video| %>
+        <div class="card bg-base-100 border border-base-300 hover:shadow-lg transition-shadow">
+          <!-- Thumbnail -->
+          <figure class="relative aspect-video bg-base-200">
+            <% if video.thumbnail_url.present? %>
+              <%= image_tag video.thumbnail_url, alt: video.title, class: "w-full h-full object-cover" %>
+            <% else %>
+              <div class="w-full h-full flex items-center justify-center">
+                <span class="iconify lucide--video size-12 text-base-content/20"></span>
+              </div>
+            <% end %>
+          </figure>
+
+          <div class="card-body p-4">
+            <!-- Title -->
+            <h3 class="card-title text-sm line-clamp-2" title="<%= video.title %>">
+              <%= video.title || "Untitled Video" %>
+            </h3>
+
+            <!-- Stats -->
+            <div class="flex items-center gap-4 text-xs text-base-content/60 mt-2">
+              <div class="flex items-center gap-1" title="Likes">
+                <span class="iconify lucide--thumbs-up size-3.5"></span>
+                <%= number_to_human(video.like_count, precision: 1, significant: false) %>
+              </div>
+              <div class="flex items-center gap-1" title="Comments">
+                <span class="iconify lucide--message-circle size-3.5"></span>
+                <%= number_to_human(video.comment_count, precision: 1, significant: false) %>
+              </div>
+            </div>
+
+            <!-- Fetched timestamp -->
+            <div class="text-xs text-base-content/40 mt-2">
+              <% if video.fetched_at %>
+                Fetched <%= time_ago_in_words(video.fetched_at) %> ago
+              <% else %>
+                Not yet fetched
+              <% end %>
+            </div>
+
+            <!-- Actions -->
+            <div class="card-actions justify-between items-center mt-4">
+              <%= link_to "https://youtube.com/watch?v=#{video.youtube_id}",
+                  target: "_blank",
+                  class: "btn btn-ghost btn-xs gap-1" do %>
+                <span class="iconify lucide--external-link size-3"></span>
+                Watch
+              <% end %>
+
+              <%= link_to video_path(video), class: "btn btn-ghost btn-xs gap-1" do %>
+                <span class="iconify lucide--eye size-3"></span>
+                Details
+              <% end %>
+
+              <%= button_to video_path(video),
+                  method: :delete,
+                  class: "btn btn-ghost btn-xs text-error gap-1",
+                  data: { turbo_confirm: "Are you sure you want to remove this video?" } do %>
+                <span class="iconify lucide--trash-2 size-3"></span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Subscribe to job progress updates -->
+<%= turbo_stream_from "job_progress_#{current_user.id}" %>

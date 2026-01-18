@@ -65,9 +65,9 @@ module DashboardHelper
   }.freeze
 
   def project_avatar(project_id)
-    rand = rand(1..21)
-    tag.div class: "#{project_bg_color(rand)} rounded-box flex size-8 items-center justify-center" do
-      tag.div class: "mask #{project_mask(rand)} #{project_color(rand)} size-5"
+    seed = project_id.to_i
+    tag.div class: "#{project_bg_color(seed)} rounded-box flex size-8 items-center justify-center shrink-0" do
+      tag.div class: "mask #{project_mask(seed)} #{project_color(seed)} size-5"
     end
   end
 

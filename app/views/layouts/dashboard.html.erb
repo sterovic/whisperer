@@ -18,9 +18,14 @@
         <div class="flex h-screen min-w-0 grow flex-col overflow-auto">
           <%= render "shared/topbar" %>
 
+          <%= render "shared/flash" %>
+
           <div id="layout-content">
             <%= yield %>
           </div>
+
+          <!-- Modal container for Turbo Frame -->
+          <%= turbo_frame_tag "modal" %>
 
           <%= render "shared/footer" %>
         </div>

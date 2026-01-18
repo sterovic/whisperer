@@ -1,0 +1,33 @@
+<%= turbo_frame_tag "modal" do %>
+  <dialog id="project_modal" class="modal modal-open">
+    <div class="modal-box">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold">Edit Project</h3>
+        <%= link_to root_path, class: "btn btn-sm btn-circle btn-ghost" do %>
+          <span class="iconify lucide--x size-4"></span>
+        <% end %>
+      </div>
+
+      <%= render "form", project: @project %>
+
+      <div class="divider"></div>
+
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-error">Danger Zone</p>
+          <p class="text-xs text-base-content/60">Delete this project and all its data</p>
+        </div>
+        <%= button_to project_path(@project),
+            method: :delete,
+            class: "btn btn-error btn-sm btn-outline",
+            data: { turbo_confirm: "Are you sure you want to delete this project? All videos and comments will be permanently removed." } do %>
+          <span class="iconify lucide--trash-2 size-4"></span>
+          Delete
+        <% end %>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <%= link_to "", root_path %>
+    </form>
+  </dialog>
+<% end %>

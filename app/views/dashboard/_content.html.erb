@@ -1,0 +1,183 @@
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <span class="iconify lucide--home size-4"></span>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Dashboard</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Welcome back, <%= current_user.first_name %>!</h1>
+        <p class="text-base-content/60 text-sm mt-1">
+          Managing <strong><%= @current_project.name %></strong>
+        </p>
+      </div>
+      <%= link_to edit_project_path(@current_project), data: { turbo_frame: "modal" }, class: "btn btn-ghost btn-sm gap-2" do %>
+        <span class="iconify lucide--settings size-4"></span>
+        Project Settings
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Videos Count -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-primary/10 rounded-box p-3">
+          <span class="iconify lucide--video size-6 text-primary"></span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold"><%= @current_project.videos.count %></p>
+          <p class="text-sm text-base-content/60">Videos</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments Count -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-secondary/10 rounded-box p-3">
+          <span class="iconify lucide--message-circle size-6 text-secondary"></span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold"><%= @current_project.comments.count %></p>
+          <p class="text-sm text-base-content/60">Comments</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visible Comments -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-success/10 rounded-box p-3">
+          <span class="iconify lucide--eye size-6 text-success"></span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold"><%= @current_project.comments.visible.count %></p>
+          <p class="text-sm text-base-content/60">Visible</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Google Accounts -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-info/10 rounded-box p-3">
+          <span class="iconify lucide--users size-6 text-info"></span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold"><%= current_user.google_accounts.count %></p>
+          <p class="text-sm text-base-content/60">Google Accounts</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="bg-base-100 rounded-box border border-base-300 p-6 mb-6">
+    <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
+    <div class="flex flex-wrap gap-3">
+      <%= link_to import_videos_path, class: "btn btn-primary gap-2" do %>
+        <span class="iconify lucide--download size-4"></span>
+        Import Videos
+      <% end %>
+      <%= link_to videos_path, class: "btn btn-outline gap-2" do %>
+        <span class="iconify lucide--video size-4"></span>
+        View Videos
+      <% end %>
+      <%= link_to comments_path, class: "btn btn-outline gap-2" do %>
+        <span class="iconify lucide--message-circle size-4"></span>
+        View Comments
+      <% end %>
+      <%= link_to jobs_path, class: "btn btn-outline gap-2" do %>
+        <span class="iconify lucide--briefcase size-4"></span>
+        Manage Jobs
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Videos -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Recent Videos</h2>
+        <%= link_to videos_path, class: "btn btn-ghost btn-xs gap-1" do %>
+          View All
+          <span class="iconify lucide--arrow-right size-3"></span>
+        <% end %>
+      </div>
+      <% recent_videos = @current_project.videos.order(created_at: :desc).limit(5) %>
+      <% if recent_videos.any? %>
+        <ul class="space-y-2">
+          <% recent_videos.each do |video| %>
+            <li class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 transition-colors">
+              <% if video.thumbnail_url.present? %>
+                <%= image_tag video.thumbnail_url, class: "w-16 h-9 object-cover rounded", alt: "" %>
+              <% else %>
+                <div class="w-16 h-9 bg-base-200 rounded flex items-center justify-center">
+                  <span class="iconify lucide--video size-4 text-base-content/30"></span>
+                </div>
+              <% end %>
+              <div class="min-w-0 flex-1">
+                <%= link_to video_path(video), class: "text-sm font-medium truncate block hover:text-primary" do %>
+                  <%= video.title&.truncate(40) || "Untitled" %>
+                <% end %>
+                <p class="text-xs text-base-content/60"><%= time_ago_in_words(video.created_at) %> ago</p>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="text-center py-8">
+          <span class="iconify lucide--video-off size-8 text-base-content/30 mx-auto mb-2"></span>
+          <p class="text-sm text-base-content/60">No videos yet</p>
+          <%= link_to import_videos_path, class: "btn btn-sm btn-primary mt-2" do %>
+            Import Videos
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Recent Comments -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Recent Comments</h2>
+        <%= link_to comments_path, class: "btn btn-ghost btn-xs gap-1" do %>
+          View All
+          <span class="iconify lucide--arrow-right size-3"></span>
+        <% end %>
+      </div>
+      <% recent_comments = @current_project.comments.order(created_at: :desc).limit(5) %>
+      <% if recent_comments.any? %>
+        <ul class="space-y-2">
+          <% recent_comments.each do |comment| %>
+            <li class="p-2 rounded-lg hover:bg-base-200 transition-colors">
+              <p class="text-sm line-clamp-2"><%= comment.text %></p>
+              <div class="flex items-center gap-2 mt-1">
+                <% badge_class = case comment.status
+                   when "visible" then "badge-success"
+                   when "hidden" then "badge-warning"
+                   when "removed" then "badge-error"
+                   else "badge-ghost"
+                   end %>
+                <span class="badge badge-xs <%= badge_class %>"><%= comment.status %></span>
+                <span class="text-xs text-base-content/60"><%= time_ago_in_words(comment.created_at) %> ago</span>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="text-center py-8">
+          <span class="iconify lucide--message-circle-off size-8 text-base-content/30 mx-auto mb-2"></span>
+          <p class="text-sm text-base-content/60">No comments yet</p>
+          <%= link_to jobs_path, class: "btn btn-sm btn-primary mt-2" do %>
+            Post Comments
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

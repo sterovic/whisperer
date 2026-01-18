@@ -10,9 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_10_115839) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_17_211725) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "comments", force: :cascade do |t|
+    t.string "youtube_comment_id"
+    t.text "text", null: false
+    t.bigint "video_id", null: false
+    t.bigint "parent_id"
+    t.integer "status", default: 0, null: false
+    t.integer "like_count", default: 0
+    t.integer "rank"
+    t.bigint "google_account_id", null: false
+    t.bigint "project_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["google_account_id"], name: "index_comments_on_google_account_id"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
+    t.index ["project_id"], name: "index_comments_on_project_id"
+    t.index ["status"], name: "index_comments_on_status"
+    t.index ["video_id", "parent_id"], name: "index_comments_on_video_id_and_parent_id"
+    t.index ["video_id"], name: "index_comments_on_video_id"
+    t.index ["youtube_comment_id"], name: "index_comments_on_youtube_comment_id"
+  end
 
   create_table "good_job_batches", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -105,6 +126,35 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_10_115839) do
     t.index ["scheduled_at"], name: "index_good_jobs_on_scheduled_at", where: "(finished_at IS NULL)"
   end
 
+  create_table "google_accounts", force: :cascade do |t|
+    t.string "google_id", null: false
+    t.string "email"
+    t.string "name"
+    t.string "youtube_channel_id"
+    t.string "youtube_handle"
+    t.string "avatar_url"
+    t.string "access_token"
+    t.string "refresh_token"
+    t.datetime "token_expires_at"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["google_id", "user_id"], name: "index_google_accounts_on_google_id_and_user_id", unique: true
+    t.index ["google_id"], name: "index_google_accounts_on_google_id"
+    t.index ["user_id"], name: "index_google_accounts_on_user_id"
+  end
+
+  create_table "job_schedules", force: :cascade do |t|
+    t.string "job_class", null: false
+    t.integer "interval_minutes", default: 10, null: false
+    t.boolean "enabled", default: false, null: false
+    t.datetime "last_run_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["enabled"], name: "index_job_schedules_on_enabled"
+    t.index ["job_class"], name: "index_job_schedules_on_job_class", unique: true
+  end
+
   create_table "project_members", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "project_id", null: false
@@ -148,6 +198,30 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_10_115839) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  create_table "videos", force: :cascade do |t|
+    t.string "youtube_id", null: false
+    t.string "title"
+    t.text "description"
+    t.integer "comment_count", default: 0
+    t.integer "like_count", default: 0
+    t.integer "view_count", default: 0
+    t.string "thumbnail_url"
+    t.datetime "fetched_at"
+    t.jsonb "raw_data", default: {}
+    t.bigint "project_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id"], name: "index_videos_on_project_id"
+    t.index ["youtube_id", "project_id"], name: "index_videos_on_youtube_id_and_project_id", unique: true
+    t.index ["youtube_id"], name: "index_videos_on_youtube_id"
+  end
+
+  add_foreign_key "comments", "comments", column: "parent_id"
+  add_foreign_key "comments", "google_accounts"
+  add_foreign_key "comments", "projects"
+  add_foreign_key "comments", "videos"
+  add_foreign_key "google_accounts", "users"
   add_foreign_key "project_members", "projects"
   add_foreign_key "project_members", "users"
+  add_foreign_key "videos", "projects"
 end

@@ -24,7 +24,40 @@ Rails.application.routes.draw do
   resources :jobs, only: [:index] do
     collection do
       post :trigger
-      patch :schedule
+    end
+  end
+
+  # Job schedules management
+  resources :job_schedules, only: [:update] do
+    member do
+      post :toggle
+      post :run_now
+    end
+  end
+
+  # Videos management
+  resources :videos, only: [:index, :show, :destroy] do
+    collection do
+      get :import
+      post :import, action: :create_import
+    end
+  end
+
+  # Google Accounts (YouTube OAuth)
+  resources :google_accounts, only: [:index, :destroy] do
+    collection do
+      get :authorize
+      get :oauth_callback
+    end
+  end
+
+  # Comments management
+  resources :comments, only: [:index]
+
+  # Projects management
+  resources :projects do
+    member do
+      post :switch
     end
   end
 

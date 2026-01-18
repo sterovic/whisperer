@@ -2,12 +2,12 @@
   type="checkbox"
   id="layout-sidebar-toggle-trigger"
   class="hidden"
-  aria-label="Toggle layout sidebar" />
+  aria-label="Toggle layout sidebar"/>
 <input
   type="checkbox"
   id="layout-sidebar-hover-trigger"
   class="hidden"
-  aria-label="Dense layout sidebar" />
+  aria-label="Dense layout sidebar"/>
 <div id="layout-sidebar-hover" class="bg-base-300 h-screen w-1"></div>
 
 <div id="layout-sidebar" class="sidebar-menu sidebar-menu-activation">
@@ -30,70 +30,57 @@
     <div data-simplebar class="size-full">
       <div class="mb-3 space-y-0.5 px-2.5">
         <p class="menu-label px-2.5 pt-3 pb-1.5 first:pt-0">Overview</p>
-        <div class="group collapse">
-          <input
-            aria-label="Sidemenu item trigger"
-            type="checkbox"
-            class="peer"
-            name="sidebar-menu-parent-item" />
-          <div class="collapse-title px-2.5 py-1.5">
-            <span class="iconify lucide--monitor-dot size-4"></span>
-            <span class="grow">Dashboard</span>
-            <span class="iconify lucide--chevron-right arrow-icon size-3.5"></span>
-          </div>
-          <div class="collapse-content ms-6.5 !p-0">
-            <div class="mt-0.5 space-y-0.5">
-              <a class="menu-item false" href="./dashboards-ecommerce.html">
-                <span class="grow">Ecommerce</span>
-              </a>
-              <a class="menu-item false" href="./dashboards-crm.html">
-                <span class="grow">CRM</span>
-              </a>
-              <a class="menu-item false" href="./dashboards-gen-ai.html">
-                <span class="grow">Gen AI</span>
-              </a>
-            </div>
-          </div>
-        </div>
-        <div class="group collapse">
-          <input
-            aria-label="Sidemenu item trigger"
-            type="checkbox"
-            class="peer"
-            name="sidebar-menu-parent-item" />
-          <div class="collapse-title px-2.5 py-1.5">
-            <span class="iconify lucide--bot-message-square size-4"></span>
-            <span class="grow">Agentic Hub</span>
-            <span class="iconify lucide--chevron-right arrow-icon size-3.5"></span>
-          </div>
-          <div class="collapse-content ms-6.5 !p-0">
-            <div class="mt-0.5 space-y-0.5">
-              <a class="menu-item false" href="./agentic-storage.html">
-                <span class="grow">Storage</span>
-                <div class="ms-auto inline-flex gap-2">
-                  <div
-                    class="border-primary/20 bg-primary/10 text-primary rounded-box border px-1.5 text-[12px]">
-                    New
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
-        <a class="menu-item false" href="./apps-file-manager.html">
-          <span class="iconify lucide--server size-4"></span>
-          <span class="grow">File Manager</span>
-        </a>
+        <!--        <div class="group collapse">-->
+        <!--          <input-->
+        <!--            aria-label="Sidemenu item trigger"-->
+        <!--            type="checkbox"-->
+        <!--            class="peer"-->
+        <!--            name="sidebar-menu-parent-item"/>-->
+        <!--          <div class="collapse-title px-2.5 py-1.5">-->
+        <!--            <span class="iconify lucide--monitor-dot size-4"></span>-->
+        <!--            <span class="grow">Dashboard</span>-->
+        <!--            <span class="iconify lucide--chevron-right arrow-icon size-3.5"></span>-->
+        <!--          </div>-->
+        <!--          <div class="collapse-content ms-6.5 !p-0">-->
+        <!--            <div class="mt-0.5 space-y-0.5">-->
+        <!--              <a class="menu-item false" href="./dashboards-ecommerce.html">-->
+        <!--                <span class="grow">Ecommerce</span>-->
+        <!--              </a>-->
+        <!--              <a class="menu-item false" href="./dashboards-crm.html">-->
+        <!--                <span class="grow">CRM</span>-->
+        <!--              </a>-->
+        <!--              <a class="menu-item false" href="./dashboards-gen-ai.html">-->
+        <!--                <span class="grow">Gen AI</span>-->
+        <!--              </a>-->
+        <!--            </div>-->
+        <!--          </div>-->
+        <!--        </div>-->
+        <%= link_to dashboard_path, class: "menu-item false" do %>
+          <span class="iconify lucide--monitor size-4"></span>
+          <span class="grow">Dashboard</span>
+        <% end %>
         <%= link_to jobs_path, class: "menu-item false" do %>
           <span class="iconify lucide--briefcase size-4"></span>
           <span class="grow">Jobs</span>
+        <% end %>
+        <%= link_to videos_path, class: "menu-item false" do %>
+          <span class="iconify lucide--video size-4"></span>
+          <span class="grow">Videos</span>
+        <% end %>
+        <%= link_to google_accounts_path, class: "menu-item false" do %>
+          <span class="iconify lucide--user-circle size-4"></span>
+          <span class="grow">Google Accounts</span>
+        <% end %>
+        <%= link_to comments_path, class: "menu-item false" do %>
+          <span class="iconify lucide--message-circle size-4"></span>
+          <span class="grow">Comments</span>
         <% end %>
       </div>
     </div>
     <div class="from-base-100/60 pointer-events-none absolute start-0 end-0 bottom-0 h-7 bg-linear-to-t to-transparent"></div>
   </div>
   <div class="mb-2">
-    <hr class="border-base-300 my-2 border-dashed" />
+    <hr class="border-base-300 my-2 border-dashed"/>
     <div class="dropdown dropdown-top dropdown-end w-full">
       <div
         tabindex="0"

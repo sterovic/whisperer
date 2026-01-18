@@ -34,7 +34,14 @@ class ApplicationController < ActionController::Base
   end
 
   def set_current_project
-    @current_project = current_user&.current_project || Project.first
-    @other_projects = Project.where.not(id: @current_project.id)
+    return unless current_user
+
+    @current_project = current_user.current_project || current_user.projects.first
+    @other_projects = current_user.projects.where.not(id: @current_project&.id)
+
+    # Auto-set current project if user has projects but none selected
+    if @current_project && current_user.current_project_id.nil?
+      current_user.update(current_project_id: @current_project.id)
+    end
   end
 end

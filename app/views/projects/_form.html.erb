@@ -1,0 +1,42 @@
+<%= form_with model: project, class: "space-y-4", data: { turbo_frame: "_top" } do |f| %>
+  <% if project.errors.any? %>
+    <div class="alert alert-error">
+      <span class="iconify lucide--alert-circle size-5"></span>
+      <div>
+        <% project.errors.full_messages.each do |message| %>
+          <p><%= message %></p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="form-control">
+    <%= f.label :name, class: "label" do %>
+      <span class="label-text font-medium">Project Name</span>
+    <% end %>
+    <%= f.text_field :name,
+        class: "input input-bordered w-full",
+        placeholder: "My Awesome Project",
+        required: true,
+        autofocus: true %>
+  </div>
+
+  <div class="form-control">
+    <%= f.label :description, class: "label" do %>
+      <span class="label-text font-medium">Description</span>
+      <span class="label-text-alt text-base-content/50">Optional</span>
+    <% end %>
+    <%= f.text_area :description,
+        class: "textarea textarea-bordered w-full",
+        placeholder: "Brief description of your project...",
+        rows: 3 %>
+    <label class="label">
+      <span class="label-text-alt text-base-content/50">Used by AI to generate relevant comments</span>
+    </label>
+  </div>
+
+  <div class="modal-action">
+    <button type="button" class="btn btn-ghost" onclick="this.closest('dialog').close()">Cancel</button>
+    <%= f.submit project.persisted? ? "Save Changes" : "Create Project", class: "btn btn-primary" %>
+  </div>
+<% end %>

@@ -1,0 +1,195 @@
+<% content_for :title, "#{@video.title || 'Video'} - Whisperer" %>
+
+<div class="p-4 sm:p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <%= link_to "Videos", videos_path, class: "hover:text-base-content transition-colors" %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content truncate max-w-xs"><%= @video.title&.truncate(30) || "Video" %></span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold line-clamp-2"><%= @video.title || "Untitled Video" %></h1>
+        <p class="text-base-content/60 text-sm mt-1">
+          YouTube ID: <%= @video.youtube_id %>
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <%= link_to "https://youtube.com/watch?v=#{@video.youtube_id}",
+            target: "_blank",
+            class: "btn btn-primary gap-2" do %>
+          <span class="iconify lucide--external-link size-4"></span>
+          Watch on YouTube
+        <% end %>
+        <%= link_to videos_path, class: "btn btn-ghost gap-2" do %>
+          <span class="iconify lucide--arrow-left size-4"></span>
+          Back
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Thumbnail -->
+      <div class="bg-base-100 rounded-box border border-base-300 overflow-hidden">
+        <figure class="aspect-video bg-base-200">
+          <% if @video.thumbnail_url.present? %>
+            <%= image_tag @video.thumbnail_url, alt: @video.title, class: "w-full h-full object-cover" %>
+          <% else %>
+            <div class="w-full h-full flex items-center justify-center">
+              <span class="iconify lucide--video size-24 text-base-content/20"></span>
+            </div>
+          <% end %>
+        </figure>
+      </div>
+
+      <!-- Description -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="iconify lucide--file-text size-5 text-primary mt-0.5"></span>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold">Description</h2>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <% if @video.description.present? %>
+          <div class="prose prose-sm max-w-none">
+            <%= simple_format(@video.description, {}, sanitize: true) %>
+          </div>
+        <% else %>
+          <p class="text-base-content/60 italic">No description available</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="lg:col-span-1 space-y-6">
+      <!-- Stats -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="iconify lucide--bar-chart-3 size-5 text-secondary mt-0.5"></span>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold">Statistics</h2>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-base-content/60">
+              <span class="iconify lucide--thumbs-up size-4"></span>
+              <span>Likes</span>
+            </div>
+            <span class="font-semibold"><%= number_with_delimiter(@video.like_count) %></span>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-base-content/60">
+              <span class="iconify lucide--message-circle size-4"></span>
+              <span>Comments</span>
+            </div>
+            <span class="font-semibold"><%= number_with_delimiter(@video.comment_count) %></span>
+          </div>
+
+          <% if @video.raw_data["view_count"].present? %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-base-content/60">
+                <span class="iconify lucide--eye size-4"></span>
+                <span>Views</span>
+              </div>
+              <span class="font-semibold"><%= number_with_delimiter(@video.raw_data["view_count"]) %></span>
+            </div>
+          <% end %>
+
+          <% if @video.raw_data["duration"].present? %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-base-content/60">
+                <span class="iconify lucide--clock size-4"></span>
+                <span>Duration</span>
+              </div>
+              <span class="font-semibold"><%= @video.raw_data["duration"] %>s</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Channel Info -->
+      <% if @video.raw_data["channel_title"].present? %>
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <div class="flex items-start gap-3 mb-4">
+            <span class="iconify lucide--user size-5 text-accent mt-0.5"></span>
+            <div class="flex-1">
+              <h2 class="text-lg font-semibold">Channel</h2>
+            </div>
+          </div>
+
+          <div class="divider my-4"></div>
+
+          <p class="font-medium"><%= @video.raw_data["channel_title"] %></p>
+          <% if @video.raw_data["published_at"].present? %>
+            <p class="text-sm text-base-content/60 mt-2">
+              Published <%= time_ago_in_words(Time.parse(@video.raw_data["published_at"])) %> ago
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <!-- Metadata -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="iconify lucide--info size-5 text-info mt-0.5"></span>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold">Metadata</h2>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="space-y-3 text-sm">
+          <div>
+            <span class="text-base-content/60">Added:</span>
+            <span class="ml-2"><%= @video.created_at.strftime("%B %d, %Y at %H:%M") %></span>
+          </div>
+          <% if @video.fetched_at %>
+            <div>
+              <span class="text-base-content/60">Last fetched:</span>
+              <span class="ml-2"><%= @video.fetched_at.strftime("%B %d, %Y at %H:%M") %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="iconify lucide--settings size-5 text-warning mt-0.5"></span>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold">Actions</h2>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="space-y-2">
+          <%= button_to video_path(@video),
+              method: :delete,
+              class: "btn btn-error btn-outline w-full gap-2",
+              data: { turbo_confirm: "Are you sure you want to remove this video?" } do %>
+            <span class="iconify lucide--trash-2 size-4"></span>
+            Remove Video
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_many :project_members, dependent: :destroy
   has_many :projects, through: :project_members
+  has_many :google_accounts, dependent: :destroy
 
   # Devise modules
   devise :database_authenticatable, :registerable,
