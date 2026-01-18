@@ -45,3 +45,4 @@
 /config/credentials/development.key
 
 *.iml
+/config/credentials/production.key
