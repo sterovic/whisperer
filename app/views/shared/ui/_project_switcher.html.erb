@@ -10,37 +10,38 @@
         <span class="iconify lucide--chevrons-up-down text-base-content/50 shrink-0"></span>
       </div>
       <div tabindex="0"
-           class="dropdown-content bg-base-100 rounded-box mt-1 w-56 shadow-md transition-all hover:shadow-lg z-50">
-        <ul class="menu w-full space-y-1 p-2">
+           class="dropdown-content bg-base-100 rounded-box mt-1 w-48 transition-all z-50">
+        <ul class="menu w-full space-y-1 p-2 shadow-md overflow-hidden">
           <!-- Edit current project -->
           <li>
             <%= link_to edit_project_path(@current_project), data: { turbo_frame: "modal" }, class: "flex items-center gap-2" do %>
-              <span class="iconify lucide--settings size-4 text-base-content/60"></span>
-              <span>Project Settings</span>
+              <span class="iconify lucide--settings size-4 text-base-content/60 shrink-0"></span>
+              <span class="truncate">Project Settings</span>
             <% end %>
           </li>
 
           <% if @other_projects.any? %>
             <li class="menu-title text-xs pt-2">Switch Project</li>
             <% @other_projects.each do |project| %>
-              <li>
-                <%= button_to switch_project_path(project), method: :post, class: "flex items-center gap-2 w-full" do %>
-                  <%= project_avatar(project.id) %>
-                  <div class="grow min-w-0 text-left">
-                    <p class="text-sm font-medium truncate"><%= project.name %></p>
-                  </div>
+              <li class="overflow-hidden">
+                <%= button_to switch_project_path(project),
+                              method: :post,
+                              class: "flex items-center gap-2 w-full cursor-pointer min-w-0" do
+                %>
+                  <span class="shrink-0"><%= project_avatar(project.id) %></span>
+                  <span class="truncate"><%= project.name %></span>
                 <% end %>
               </li>
             <% end %>
           <% end %>
 
-          <div class="divider my-1"></div>
+          <hr class="border-base-300 -px-2 my-2 border-dashed"/>
 
           <!-- Create new project -->
           <li>
             <%= link_to new_project_path, data: { turbo_frame: "modal" }, class: "flex items-center gap-2 text-primary" do %>
-              <span class="iconify lucide--plus-circle size-4"></span>
-              <span>Create New Project</span>
+              <span class="iconify lucide--plus-circle size-4 shrink-0"></span>
+              <span class="truncate">Create New Project</span>
             <% end %>
           </li>
         </ul>

@@ -1,8 +1,8 @@
-<div class="p-4 sm:p-6">
+<div>
   <!-- Page Header -->
   <div class="mb-6">
     <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
-      <span class="iconify lucide--home size-4"></span>
+      <span class="block iconify lucide--home size-4"></span>
       <span class="iconify lucide--chevron-right size-3"></span>
       <span class="text-base-content">Dashboard</span>
     </div>
@@ -158,11 +158,11 @@
               <p class="text-sm line-clamp-2"><%= comment.text %></p>
               <div class="flex items-center gap-2 mt-1">
                 <% badge_class = case comment.status
-                   when "visible" then "badge-success"
-                   when "hidden" then "badge-warning"
-                   when "removed" then "badge-error"
-                   else "badge-ghost"
-                   end %>
+                                 when "visible" then "badge-success"
+                                 when "hidden" then "badge-warning"
+                                 when "removed" then "badge-error"
+                                 else "badge-ghost"
+                                 end %>
                 <span class="badge badge-xs <%= badge_class %>"><%= comment.status %></span>
                 <span class="text-xs text-base-content/60"><%= time_ago_in_words(comment.created_at) %> ago</span>
               </div>

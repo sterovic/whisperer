@@ -5,7 +5,7 @@
   <div class="mb-6">
     <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
       <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
-        <span class="iconify lucide--home size-4"></span>
+        <span class="block iconify lucide--home size-4"></span>
       <% end %>
       <span class="iconify lucide--chevron-right size-3"></span>
       <%= link_to "Videos", videos_path, class: "hover:text-base-content transition-colors" %>
@@ -54,16 +54,16 @@
               <span class="label-text-alt text-base-content/60">One URL per line</span>
             </label>
             <%= f.text_area :urls,
-                rows: 10,
-                class: "textarea textarea-bordered font-mono text-sm",
-                placeholder: "https://www.youtube.com/watch?v=dQw4w9WgXcQ\nhttps://youtu.be/dQw4w9WgXcQ\nhttps://www.youtube.com/embed/dQw4w9WgXcQ",
-                disabled: current_project.nil? %>
+                            rows: 10,
+                            class: "textarea textarea-bordered font-mono text-sm",
+                            placeholder: "https://www.youtube.com/watch?v=dQw4w9WgXcQ\nhttps://youtu.be/dQw4w9WgXcQ\nhttps://www.youtube.com/embed/dQw4w9WgXcQ",
+                            disabled: current_project.nil? %>
           </div>
 
           <div class="form-control mt-6">
             <%= f.submit "Import Videos",
-                class: "btn btn-primary gap-2",
-                disabled: current_project.nil? %>
+                         class: "btn btn-primary gap-2",
+                         disabled: current_project.nil? %>
           </div>
         <% end %>
       </div>

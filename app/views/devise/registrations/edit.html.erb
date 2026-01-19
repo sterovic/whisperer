@@ -5,7 +5,7 @@
   <div class="mb-6">
     <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
       <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
-        <span class="iconify lucide--home size-4"></span>
+        <span class="block iconify lucide--home size-4"></span>
       <% end %>
       <span class="iconify lucide--chevron-right size-3"></span>
       <span>Settings</span>
@@ -52,7 +52,8 @@
                 <%= f.email_field :email, autocomplete: "email", class: "grow focus:outline-0", placeholder: "Email Address" %>
               <% end %>
               <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
-                <p class="text-sm text-warning mt-2">Currently waiting confirmation for: <%= resource.unconfirmed_email %></p>
+                <p class="text-sm text-warning mt-2">Currently waiting confirmation
+                  for: <%= resource.unconfirmed_email %></p>
               <% end %>
             </fieldset>
           </div>
@@ -147,9 +148,9 @@
             <h3 class="font-semibold text-error mb-1">Danger Zone</h3>
             <p class="text-sm text-base-content/60 mb-4">Permanently delete your account and all associated data</p>
             <%= button_to "Delete Account",
-                registration_path(resource_name),
-                data: { confirm: "Are you sure? This action cannot be undone and will permanently delete your account and all associated data.", turbo_method: :delete },
-                class: "btn btn-error btn-sm btn-outline w-full" %>
+                          registration_path(resource_name),
+                          data: { confirm: "Are you sure? This action cannot be undone and will permanently delete your account and all associated data.", turbo_method: :delete },
+                          class: "btn btn-error btn-sm btn-outline w-full" %>
           </div>
         </div>
       </div>

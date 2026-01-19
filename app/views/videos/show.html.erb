@@ -5,7 +5,7 @@
   <div class="mb-6">
     <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
       <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
-        <span class="iconify lucide--home size-4"></span>
+        <span class="block iconify lucide--home size-4"></span>
       <% end %>
       <span class="iconify lucide--chevron-right size-3"></span>
       <%= link_to "Videos", videos_path, class: "hover:text-base-content transition-colors" %>
@@ -21,8 +21,8 @@
       </div>
       <div class="flex gap-2">
         <%= link_to "https://youtube.com/watch?v=#{@video.youtube_id}",
-            target: "_blank",
-            class: "btn btn-primary gap-2" do %>
+                    target: "_blank",
+                    class: "btn btn-primary gap-2" do %>
           <span class="iconify lucide--external-link size-4"></span>
           Watch on YouTube
         <% end %>
@@ -182,9 +182,9 @@
 
         <div class="space-y-2">
           <%= button_to video_path(@video),
-              method: :delete,
-              class: "btn btn-error btn-outline w-full gap-2",
-              data: { turbo_confirm: "Are you sure you want to remove this video?" } do %>
+                        method: :delete,
+                        class: "btn btn-error btn-outline w-full gap-2",
+                        data: { turbo_confirm: "Are you sure you want to remove this video?" } do %>
             <span class="iconify lucide--trash-2 size-4"></span>
             Remove Video
           <% end %>

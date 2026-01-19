@@ -1,11 +1,11 @@
 <% content_for :title, "Videos - Whisperer" %>
 
-<div class="p-4 sm:p-6">
+<div>
   <!-- Page Header -->
   <div class="mb-6">
     <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
       <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
-        <span class="iconify lucide--home size-4"></span>
+        <span class="block iconify lucide--home size-4"></span>
       <% end %>
       <span class="iconify lucide--chevron-right size-3"></span>
       <span class="text-base-content">Videos</span>
@@ -15,13 +15,13 @@
         <h1 class="text-2xl font-bold">Videos</h1>
         <p class="text-base-content/60 text-sm mt-1">
           <% if current_project %>
-            <%= pluralize(@videos.count, "video") %> in <%= current_project.name %>
+            <%= pluralize(@videos.length, "video") %> in <%= current_project.name %>
           <% else %>
             Select a project to view videos
           <% end %>
         </p>
       </div>
-      <%= link_to import_videos_path, class: "btn btn-primary gap-2" do %>
+      <%= link_to import_videos_path, class: "btn btn-primary btn-sm gap-2" do %>
         <span class="iconify lucide--plus size-4"></span>
         Import Videos
       <% end %>
@@ -45,72 +45,121 @@
       <% end %>
     </div>
   <% else %>
-    <!-- Videos Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <% @videos.each do |video| %>
-        <div class="card bg-base-100 border border-base-300 hover:shadow-lg transition-shadow">
-          <!-- Thumbnail -->
-          <figure class="relative aspect-video bg-base-200">
-            <% if video.thumbnail_url.present? %>
-              <%= image_tag video.thumbnail_url, alt: video.title, class: "w-full h-full object-cover" %>
-            <% else %>
-              <div class="w-full h-full flex items-center justify-center">
-                <span class="iconify lucide--video size-12 text-base-content/20"></span>
-              </div>
+    <!-- Videos Table -->
+    <div class="bg-base-100 rounded-box border border-base-300 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr class="bg-base-200/50">
+              <th class="w-20">Thumb</th>
+              <th>Video</th>
+              <th class="text-center w-24">Comments</th>
+              <th class="text-center w-32">Status</th>
+              <th class="text-center w-20">Likes</th>
+              <th class="text-center w-20">Rank</th>
+              <th class="w-24"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @videos.each do |video| %>
+              <tr class="hover:bg-base-200/30">
+                <!-- Thumbnail -->
+                <td class="p-2">
+                  <a href="https://youtube.com/watch?v=<%= video.youtube_id %>" target="_blank" class="block">
+                    <% if video.thumbnail_url.present? %>
+                      <%= image_tag video.thumbnail_url, alt: "", class: "w-16 h-10 object-cover rounded" %>
+                    <% else %>
+                      <div class="w-16 h-10 bg-base-200 rounded flex items-center justify-center">
+                        <span class="iconify lucide--video size-4 text-base-content/30"></span>
+                      </div>
+                    <% end %>
+                  </a>
+                </td>
+
+                <!-- Title -->
+                <td class="max-w-xs">
+                  <a href="https://youtube.com/watch?v=<%= video.youtube_id %>" target="_blank"
+                     class="font-medium text-sm line-clamp-2 hover:text-primary transition-colors"
+                     title="<%= video.title %>">
+                    <%= video.title || "Untitled" %>
+                  </a>
+                </td>
+
+                <!-- App Comments Count -->
+                <td class="text-center">
+                  <% if video.app_comments_count.to_i > 0 %>
+                    <span class="font-semibold"><%= video.app_comments_count %></span>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Status Breakdown -->
+                <td class="text-center">
+                  <% if video.app_comments_count.to_i > 0 %>
+                    <div class="flex items-center justify-center gap-1.5 text-xs">
+                      <% if video.visible_comments_count.to_i > 0 %>
+                        <span class="badge badge-success badge-xs gap-0.5" title="Visible">
+                          <%= video.visible_comments_count %>
+                        </span>
+                      <% end %>
+                      <% if video.hidden_comments_count.to_i > 0 %>
+                        <span class="badge badge-warning badge-xs gap-0.5" title="Hidden">
+                          <%= video.hidden_comments_count %>
+                        </span>
+                      <% end %>
+                      <% if video.removed_comments_count.to_i > 0 %>
+                        <span class="badge badge-error badge-xs gap-0.5" title="Removed">
+                          <%= video.removed_comments_count %>
+                        </span>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Total Likes on Our Comments -->
+                <td class="text-center">
+                  <% if video.total_comment_likes.to_i > 0 %>
+                    <div class="flex items-center justify-center gap-1 text-sm">
+                      <span class="iconify lucide--thumbs-up size-3.5 text-base-content/60"></span>
+                      <span><%= video.total_comment_likes %></span>
+                    </div>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Best Rank -->
+                <td class="text-center">
+                  <% if video.best_rank.present? %>
+                    <span class="badge badge-ghost badge-sm">#<%= video.best_rank %></span>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Actions -->
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <%= link_to video_path(video), class: "btn btn-ghost btn-xs btn-square", title: "Details" do %>
+                      <span class="iconify lucide--eye size-4"></span>
+                    <% end %>
+                    <%= button_to video_path(video),
+                                  method: :delete,
+                                  class: "btn btn-ghost btn-xs btn-square text-error",
+                                  title: "Remove",
+                                  data: { turbo_confirm: "Remove this video?" } do %>
+                      <span class="iconify lucide--trash-2 size-4"></span>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
             <% end %>
-          </figure>
-
-          <div class="card-body p-4">
-            <!-- Title -->
-            <h3 class="card-title text-sm line-clamp-2" title="<%= video.title %>">
-              <%= video.title || "Untitled Video" %>
-            </h3>
-
-            <!-- Stats -->
-            <div class="flex items-center gap-4 text-xs text-base-content/60 mt-2">
-              <div class="flex items-center gap-1" title="Likes">
-                <span class="iconify lucide--thumbs-up size-3.5"></span>
-                <%= number_to_human(video.like_count, precision: 1, significant: false) %>
-              </div>
-              <div class="flex items-center gap-1" title="Comments">
-                <span class="iconify lucide--message-circle size-3.5"></span>
-                <%= number_to_human(video.comment_count, precision: 1, significant: false) %>
-              </div>
-            </div>
-
-            <!-- Fetched timestamp -->
-            <div class="text-xs text-base-content/40 mt-2">
-              <% if video.fetched_at %>
-                Fetched <%= time_ago_in_words(video.fetched_at) %> ago
-              <% else %>
-                Not yet fetched
-              <% end %>
-            </div>
-
-            <!-- Actions -->
-            <div class="card-actions justify-between items-center mt-4">
-              <%= link_to "https://youtube.com/watch?v=#{video.youtube_id}",
-                  target: "_blank",
-                  class: "btn btn-ghost btn-xs gap-1" do %>
-                <span class="iconify lucide--external-link size-3"></span>
-                Watch
-              <% end %>
-
-              <%= link_to video_path(video), class: "btn btn-ghost btn-xs gap-1" do %>
-                <span class="iconify lucide--eye size-3"></span>
-                Details
-              <% end %>
-
-              <%= button_to video_path(video),
-                  method: :delete,
-                  class: "btn btn-ghost btn-xs text-error gap-1",
-                  data: { turbo_confirm: "Are you sure you want to remove this video?" } do %>
-                <span class="iconify lucide--trash-2 size-3"></span>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      <% end %>
+          </tbody>
+        </table>
+      </div>
     </div>
   <% end %>
 </div>

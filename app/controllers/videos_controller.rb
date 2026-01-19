@@ -3,7 +3,19 @@ class VideosController < ApplicationController
   before_action :set_video, only: [:show, :destroy]
 
   def index
-    @videos = current_project.videos.order(created_at: :desc)
+    @videos = current_project.videos
+      .left_joins(:comments)
+      .select(
+        "videos.*",
+        "COUNT(comments.id) AS app_comments_count",
+        "COUNT(CASE WHEN comments.status = 0 THEN 1 END) AS visible_comments_count",
+        "COUNT(CASE WHEN comments.status = 1 THEN 1 END) AS hidden_comments_count",
+        "COUNT(CASE WHEN comments.status = 2 THEN 1 END) AS removed_comments_count",
+        "COALESCE(SUM(comments.like_count), 0) AS total_comment_likes",
+        "MIN(comments.rank) AS best_rank"
+      )
+      .group("videos.id")
+      .order(created_at: :desc)
   end
 
   def show
