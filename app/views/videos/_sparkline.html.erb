@@ -1,0 +1,24 @@
+<%= turbo_frame_tag "video_#{video.id}_sparkline" do %>
+  <%# Mini bar chart showing comment frequency over the past 7 days %>
+  <% max_count = frequency.values.max || 1 %>
+  <% total = frequency.values.sum %>
+
+  <div class="flex items-end justify-center gap-0.5 h-6">
+    <% frequency.each do |date, count| %>
+      <%
+        height_pct = max_count > 0 ? (count.to_f / max_count * 100).round : 0
+        bar_height_px = height_pct > 0 ? (height_pct * 0.24).round.clamp(4, 24) : 3
+        is_today = date == Date.today + 1.day
+      %>
+      <div
+        class="tooltip tooltip-top h-full flex items-end"
+        data-tip="<%= date.strftime('%a, %b %d') %> — <%= pluralize(count, 'comment') %>"
+      >
+        <div
+          class="w-2 rounded-sm cursor-default transition-all hover:opacity-80 <%= count > 0 ? 'bg-primary' : 'bg-base-300' %> <%= is_today ? 'ring-1 ring-primary/50' : '' %>"
+          style="height: <%= bar_height_px %>px"
+        ></div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

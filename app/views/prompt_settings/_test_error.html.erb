@@ -1,0 +1,9 @@
+<%= turbo_frame_tag "test_results" do %>
+  <div class="alert alert-error text-sm">
+    <span class="iconify lucide--alert-circle size-4"></span>
+    <div>
+      <p class="font-medium">Generation failed</p>
+      <p class="text-xs opacity-80"><%= error %></p>
+    </div>
+  </div>
+<% end %>

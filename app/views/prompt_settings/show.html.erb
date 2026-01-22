@@ -1,0 +1,261 @@
+<% content_for :title, "Prompt Settings - Whisperer" %>
+
+<div class="max-w-6xl">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="block iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Prompt Settings</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Prompt Settings</h1>
+        <p class="text-base-content/60 text-sm mt-1">
+          Configure AI comment generation for <strong><%= @project.name %></strong>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+    <!-- Settings Form -->
+    <div class="xl:col-span-3 space-y-6">
+      <%= form_with model: @project, url: prompt_settings_path, method: :patch, class: "space-y-6" do |f| %>
+
+        <!-- System Prompt -->
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+            <span class="iconify lucide--file-text size-5 text-base-content/70"></span>
+            System Prompt
+          </h2>
+          <p class="text-sm text-base-content/60 mb-5">
+            The base prompt is auto-generated from your project. Add custom instructions below.
+          </p>
+
+          <div class="fieldset space-y-5">
+            <div class="space-y-2">
+              <label class="fieldset-label">Base Prompt</label>
+              <div class="bg-base-200 rounded-lg p-4 font-mono text-sm text-base-content/70 border border-base-300">
+                <p>You are a YouTube commenter promoting a product called
+                  <strong class="text-base-content"><%= @project.name %></strong>.</p>
+                <p class="mt-2">Product description:</p>
+                <p class="italic mt-1"><%= @project.description.presence || "(No description set)" %></p>
+              </div>
+              <p class="text-xs text-base-content/50">
+                This is generated from your project settings. Edit the project to change.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <label for="project_additional_instructions" class="fieldset-label">Additional Instructions</label>
+              <%= f.text_area :additional_instructions,
+                              id: "project_additional_instructions",
+                              rows: 5,
+                              class: "textarea w-full font-mono text-sm",
+                              placeholder: "Add any extra rules or guidelines for comment generation..." %>
+              <p class="text-xs text-base-content/50">
+                These instructions will be appended to the base prompt.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generation Settings -->
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <h2 class="text-lg font-semibold mb-5 flex items-center gap-2">
+            <span class="iconify lucide--sliders-horizontal size-5 text-base-content/70"></span>
+            Generation Settings
+          </h2>
+
+          <div class="fieldset grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Comment Length -->
+            <div class="space-y-2">
+              <label for="project_comment_length" class="fieldset-label">Comment Length</label>
+              <%= f.select :comment_length,
+                           Project::COMMENT_LENGTHS.map { |l| [l.titleize, l] },
+                           { selected: @project.prompt_setting(:comment_length) },
+                           { id: "project_comment_length", class: "select w-full" } %>
+            </div>
+
+            <!-- Tone -->
+            <div class="space-y-2">
+              <label for="project_tone" class="fieldset-label">Tone & Style</label>
+              <%= f.select :tone,
+                           Project::TONES.map { |t| [t.titleize, t] },
+                           { selected: @project.prompt_setting(:tone) },
+                           { id: "project_tone", class: "select w-full" } %>
+            </div>
+
+            <!-- Model -->
+            <div class="space-y-2">
+              <label for="project_model" class="fieldset-label">AI Model</label>
+              <%= f.select :model,
+                           Project::MODELS,
+                           { selected: @project.prompt_setting(:model) },
+                           { id: "project_model", class: "select w-full" } %>
+            </div>
+
+            <!-- Number of Comments -->
+            <div class="space-y-2">
+              <label for="project_num_comments" class="fieldset-label">Comments per Video</label>
+              <%= f.number_field :num_comments,
+                                 id: "project_num_comments",
+                                 value: @project.prompt_setting(:num_comments),
+                                 min: 1,
+                                 max: 20,
+                                 class: "input w-full" %>
+            </div>
+
+            <!-- Temperature -->
+            <div class="space-y-2">
+              <label for="project_temperature" class="fieldset-label">Creativity (Temperature)</label>
+              <div class="flex items-center gap-3">
+                <%= f.range_field :temperature,
+                                  id: "project_temperature",
+                                  value: @project.prompt_setting(:temperature),
+                                  min: 0.1,
+                                  max: 1.5,
+                                  step: 0.1,
+                                  class: "range range-sm range-primary flex-1" %>
+                <span class="text-sm font-mono w-8 text-right tabular-nums" id="temperature_value">
+                  <%= @project.prompt_setting(:temperature) %>
+                </span>
+              </div>
+              <p class="text-xs text-base-content/50">Lower = focused, Higher = creative</p>
+            </div>
+
+            <!-- Max Tokens -->
+            <div class="space-y-2">
+              <label for="project_max_tokens" class="fieldset-label">Max Tokens</label>
+              <%= f.number_field :max_tokens,
+                                 id: "project_max_tokens",
+                                 value: @project.prompt_setting(:max_tokens),
+                                 min: 100,
+                                 max: 4000,
+                                 step: 100,
+                                 class: "input w-full" %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context Options -->
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+            <span class="iconify lucide--list-checks size-5 text-base-content/70"></span>
+            Context to Include
+          </h2>
+          <p class="text-sm text-base-content/60 mb-5">
+            Choose what information is sent to the AI when generating comments.
+          </p>
+
+          <div class="space-y-4">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <%= f.check_box :include_video_title,
+                              { checked: @project.prompt_setting(:include_video_title), class: "checkbox checkbox-sm checkbox-primary mt-0.5" },
+                              "true", "false" %>
+              <span>
+                <span class="text-sm font-medium">Video Title</span>
+                <span class="block text-xs text-base-content/50">The title of the YouTube video</span>
+              </span>
+            </label>
+
+            <label class="flex items-start gap-3 cursor-pointer">
+              <%= f.check_box :include_video_description,
+                              { checked: @project.prompt_setting(:include_video_description), class: "checkbox checkbox-sm checkbox-primary mt-0.5" },
+                              "true", "false" %>
+              <span>
+                <span class="text-sm font-medium">Video Description</span>
+                <span class="block text-xs text-base-content/50">The video's description text</span>
+              </span>
+            </label>
+
+            <label class="flex items-start gap-3 cursor-pointer">
+              <%= f.check_box :include_existing_comments,
+                              { checked: @project.prompt_setting(:include_existing_comments), class: "checkbox checkbox-sm checkbox-primary mt-0.5" },
+                              "true", "false" %>
+              <span>
+                <span class="text-sm font-medium">Existing Comments</span>
+                <span class="block text-xs text-base-content/50">Sample comments for tone matching</span>
+              </span>
+            </label>
+
+            <label class="flex items-start gap-3 cursor-pointer">
+              <%= f.check_box :mention_product,
+                              { checked: @project.prompt_setting(:mention_product), class: "checkbox checkbox-sm checkbox-primary mt-0.5" },
+                              "true", "false" %>
+              <span>
+                <span class="text-sm font-medium">Mention Product</span>
+                <span class="block text-xs text-base-content/50">Include product name in comments</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end">
+          <%= f.submit "Save Settings", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Test Panel -->
+    <div class="xl:col-span-2">
+      <div class="bg-base-100 rounded-box border border-base-300 p-6 sticky top-22">
+        <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+          <span class="iconify lucide--flask-conical size-5 text-base-content/70"></span>
+          Test Prompt
+        </h2>
+        <p class="text-sm text-base-content/60 mb-5">
+          Generate sample comments using current settings.
+        </p>
+
+        <%= form_with url: test_prompt_settings_path, method: :post, data: { turbo_frame: "test_results" } do |f| %>
+          <div class="fieldset space-y-4">
+            <div class="space-y-2">
+              <label for="test_video_id" class="fieldset-label">Select Video</label>
+              <% if @videos.any? %>
+                <%= f.select :video_id,
+                             @videos.map { |v| [truncate(v.title || "Untitled", length: 35), v.id] },
+                             {},
+                             { id: "test_video_id", class: "select select-sm w-full" } %>
+              <% else %>
+                <div class="alert alert-warning text-sm py-2">
+                  <span class="iconify lucide--alert-triangle size-4"></span>
+                  <span>No videos in project</span>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="space-y-2">
+              <label for="test_num_comments" class="fieldset-label">Number of Comments</label>
+              <%= f.number_field :num_comments, id: "test_num_comments", value: 3, min: 1, max: 5, class: "input input-sm w-full" %>
+            </div>
+
+            <%= f.submit "Generate Test Comments",
+                         class: "btn btn-secondary btn-sm w-full",
+                         disabled: @videos.empty?,
+                         data: { turbo_submits_with: "Generating..." } %>
+          </div>
+        <% end %>
+
+        <div class="divider my-4"></div>
+
+        <%= turbo_frame_tag "test_results" do %>
+          <div class="text-center text-base-content/40 py-4">
+            <span class="iconify lucide--message-square-dashed size-8 mx-auto mb-2"></span>
+            <p class="text-sm">Results will appear here</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.getElementById('project_temperature')?.addEventListener('input', function () {
+        document.getElementById('temperature_value').textContent = this.value;
+    });
+</script>

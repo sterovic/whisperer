@@ -53,6 +53,7 @@
             <tr class="bg-base-200/50">
               <th class="w-20">Thumb</th>
               <th>Video</th>
+              <th class="text-center w-24">Activity</th>
               <th class="text-center w-24">Comments</th>
               <th class="text-center w-32">Status</th>
               <th class="text-center w-20">Likes</th>
@@ -83,6 +84,17 @@
                      title="<%= video.title %>">
                     <%= video.title || "Untitled" %>
                   </a>
+                </td>
+
+                <!-- Comment Activity Sparkline (lazy loaded) -->
+                <td class="text-center">
+                  <%= turbo_frame_tag "video_#{video.id}_sparkline",
+                                      src: comment_frequency_video_path(video),
+                                      loading: :lazy do %>
+                    <div class="flex items-center justify-center h-6">
+                      <span class="loading loading-dots loading-xs text-base-content/30"></span>
+                    </div>
+                  <% end %>
                 </td>
 
                 <!-- App Comments Count -->

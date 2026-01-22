@@ -1,6 +1,6 @@
 class VideosController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_video, only: [:show, :destroy]
+  before_action :set_video, only: [:show, :destroy, :comment_frequency]
 
   def index
     @videos = current_project.videos
@@ -24,6 +24,21 @@ class VideosController < ApplicationController
   def destroy
     @video.destroy
     redirect_to videos_path, notice: "Video removed successfully"
+  end
+
+  def comment_frequency
+    @frequency = @video.comment_frequency(period: 7.days)
+    render partial: "videos/sparkline", locals: { frequency: @frequency, video: @video }
+  rescue Yt::Errors::Forbidden => e
+    # Comments are disabled on this video
+    render partial: "videos/sparkline_error", locals: { video: @video, error: :disabled }
+  rescue Yt::Errors::NoItems, Yt::Errors::RequestError => e
+    # Video not found or API error
+    Rails.logger.warn "Failed to fetch comment frequency for video #{@video.id}: #{e.message}"
+    render partial: "videos/sparkline_error", locals: { video: @video, error: :not_found }
+  rescue => e
+    Rails.logger.error "Unexpected error fetching comment frequency for video #{@video.id}: #{e.class} - #{e.message}"
+    render partial: "videos/sparkline_error", locals: { video: @video, error: :unknown }
   end
 
   def import

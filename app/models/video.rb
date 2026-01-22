@@ -25,4 +25,35 @@ class Video < ApplicationRecord
 
     nil
   end
+
+  def popularity
+  end
+
+  def comment_frequency(period: 7.days)
+    video = Yt::Video.new id: youtube_id
+    period_start = Date.today - period
+    all_comments = []
+    page_token = nil
+
+    loop do
+      batch = video.comment_threads.take(100)
+      batch = batch.page_token(page_token) if page_token
+
+      comments = batch.to_a
+      break if comments.empty?
+
+      recent_comments = comments.select { |c| c.updated_at.to_date >= period_start }
+      all_comments.concat(recent_comments)
+
+      # Stop if we found comments older than period_start in this batch
+      break if comments.any? { |c| c.updated_at.to_date < period_start }
+
+      page_token = batch.next_page
+      break unless page_token
+    end
+
+    comment_frequencies = all_comments.map { |c| c.updated_at.to_date }.tally
+
+    (period_start..Date.today).index_with { |date| comment_frequencies[date] || 0 }
+  end
 end

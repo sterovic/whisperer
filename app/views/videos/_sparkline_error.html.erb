@@ -1,0 +1,16 @@
+<%= turbo_frame_tag "video_#{video.id}_sparkline" do %>
+  <% case error %>
+  <% when :disabled %>
+    <div class="flex items-center justify-center h-6 text-base-content/40 tooltip tooltip-top" data-tip="Comments disabled">
+      <span class="iconify lucide--message-circle-off size-4"></span>
+    </div>
+  <% when :not_found %>
+    <div class="flex items-center justify-center h-6 text-base-content/40 tooltip tooltip-top" data-tip="Video not found">
+      <span class="iconify lucide--video-off size-4"></span>
+    </div>
+  <% else %>
+    <div class="flex items-center justify-center h-6 text-warning/60 tooltip tooltip-top" data-tip="Failed to load">
+      <span class="iconify lucide--alert-triangle size-4"></span>
+    </div>
+  <% end %>
+<% end %>

@@ -41,6 +41,9 @@ Rails.application.routes.draw do
       get :import
       post :import, action: :create_import
     end
+    member do
+      get :comment_frequency
+    end
   end
 
   # Google Accounts (YouTube OAuth)
@@ -53,6 +56,11 @@ Rails.application.routes.draw do
 
   # Comments management
   resources :comments, only: [:index]
+
+  # Prompt settings (project-level AI configuration)
+  resource :prompt_settings, only: [:show, :update] do
+    post :test
+  end
 
   # Projects management
   resources :projects do
