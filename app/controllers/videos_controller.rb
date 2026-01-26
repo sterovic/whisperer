@@ -4,18 +4,22 @@ class VideosController < ApplicationController
 
   def index
     @videos = current_project.videos
-      .left_joins(:comments)
-      .select(
-        "videos.*",
-        "COUNT(comments.id) AS app_comments_count",
-        "COUNT(CASE WHEN comments.status = 0 THEN 1 END) AS visible_comments_count",
-        "COUNT(CASE WHEN comments.status = 1 THEN 1 END) AS hidden_comments_count",
-        "COUNT(CASE WHEN comments.status = 2 THEN 1 END) AS removed_comments_count",
-        "COALESCE(SUM(comments.like_count), 0) AS total_comment_likes",
-        "MIN(comments.rank) AS best_rank"
-      )
-      .group("videos.id")
-      .order(created_at: :desc)
+                             .left_joins(:comments)
+                             .select(
+                               "videos.*",
+                               "COUNT(comments.id) AS app_comments_count",
+                               "COUNT(CASE WHEN comments.status = 0 THEN 1 END) AS visible_comments_count",
+                               "COUNT(CASE WHEN comments.status = 1 THEN 1 END) AS hidden_comments_count",
+                               "COUNT(CASE WHEN comments.status = 2 THEN 1 END) AS removed_comments_count",
+                               "COALESCE(SUM(comments.like_count), 0) AS total_comment_likes",
+                               "MIN(comments.rank) AS best_rank"
+                             )
+                             .group("videos.id")
+                             .order(created_at: :desc)
+
+    # Apply comment visibility filter
+    @filter = params[:filter]
+    @videos = apply_comment_filter(@videos, @filter)
   end
 
   def show
@@ -39,6 +43,32 @@ class VideosController < ApplicationController
   rescue => e
     Rails.logger.error "Unexpected error fetching comment frequency for video #{@video.id}: #{e.class} - #{e.message}"
     render partial: "videos/sparkline_error", locals: { video: @video, error: :unknown }
+  end
+
+  def bulk_post_comments
+    @video_ids = params[:video_ids]
+
+    if @video_ids.blank?
+      redirect_to videos_path, alert: "No videos selected"
+      return
+    end
+
+    job = CommentPostingJob.perform_later(
+      current_user.id,
+      current_project.id,
+      video_ids: @video_ids,
+      skip_reschedule: true
+    )
+
+    @job_id = job.job_id
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html do
+        redirect_to videos_path,
+                    notice: "Comment posting job started for #{@video_ids.size} video(s). Progress will appear below the table."
+      end
+    end
   end
 
   def import
@@ -96,5 +126,23 @@ class VideosController < ApplicationController
   def current_project
     current_user.current_project
   end
+
   helper_method :current_project
+
+  def apply_comment_filter(videos, filter)
+    case filter
+    when "visible"
+      videos.having("COUNT(CASE WHEN comments.status = 0 THEN 1 END) > 0")
+    when "hidden"
+      videos.having("COUNT(CASE WHEN comments.status = 1 THEN 1 END) > 0")
+    when "removed"
+      videos.having("COUNT(CASE WHEN comments.status = 2 THEN 1 END) > 0")
+    when "no_comments"
+      videos.having("COUNT(comments.id) = 0")
+    when "has_comments"
+      videos.having("COUNT(comments.id) > 0")
+    else
+      videos
+    end
+  end
 end

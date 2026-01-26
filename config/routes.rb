@@ -40,6 +40,7 @@ Rails.application.routes.draw do
     collection do
       get :import
       post :import, action: :create_import
+      post :bulk_post_comments
     end
     member do
       get :comment_frequency
@@ -47,7 +48,10 @@ Rails.application.routes.draw do
   end
 
   # Google Accounts (YouTube OAuth)
-  resources :google_accounts, only: [:index, :destroy] do
+  resources :google_accounts, only: [:index] do
+    member do
+      patch :disconnect
+    end
     collection do
       get :authorize
       get :oauth_callback

@@ -2,52 +2,70 @@ class CommentPostingJob < ApplicationJob
   queue_as :default
 
   after_perform do |job|
+    # Don't reschedule if this was a manual trigger with specific videos
+    options = job.arguments.last.is_a?(Hash) ? job.arguments.last : {}
+    next if options[:skip_reschedule]
+
     # Reschedule with same user/project if enabled
     schedule = JobSchedule.for(job.class.name)
-    job.class.set(wait: schedule.interval_minutes.minutes).perform_later(*job.arguments) if schedule.enabled?
+    if schedule.enabled?
+      # Only pass user_id and project_id for scheduled jobs (no video_ids)
+      job.class.set(wait: schedule.interval_minutes.minutes).perform_later(
+        job.arguments[0],
+        job.arguments[1]
+      )
+    end
   end
 
-  def perform(user_id, project_id)
-    schedule = JobSchedule.for(self.class.name)
+  def perform(user_id, project_id, options = {})
+    options = options.symbolize_keys
+    @skip_reschedule = options[:skip_reschedule]
+    @video_ids = options[:video_ids]
 
-    # Skip if another instance already ran recently (prevents duplicates when interval changes)
-    if schedule.recently_ran?
-      Rails.logger.info "CommentPostingJob: Skipping - another instance ran recently"
-      return
+    # Only check schedule for automated runs (not manual triggers)
+    unless @skip_reschedule
+      schedule = JobSchedule.for(self.class.name)
+
+      # Skip if another instance already ran recently (prevents duplicates when interval changes)
+      if schedule.recently_ran?
+        Rails.logger.info "CommentPostingJob: Skipping - another instance ran recently"
+        return
+      end
+
+      schedule.touch(:last_run_at)
     end
 
-    schedule.touch(:last_run_at)
     @user = User.find(user_id)
     @project = Project.find(project_id)
     @job_id = provider_job_id || job_id
-    @google_accounts = @user.google_accounts.to_a
+    @usable_accounts = @user.google_accounts.usable.to_a
 
-    if @google_accounts.empty?
-      broadcast_error("No Google accounts linked. Please connect at least one account.")
+    if @usable_accounts.empty?
+      broadcast_error("No usable Google accounts. Please connect or reconnect an account.")
       return
     end
 
-    uncommented_videos = find_uncommented_videos
-    @total_steps = uncommented_videos.size
+    videos_to_process = find_videos_to_process
+    @total_steps = videos_to_process.size
     @current_step = 0
 
-    if uncommented_videos.empty?
-      broadcast_completion(success: true, message: "No uncommented videos found")
+    if videos_to_process.empty?
+      broadcast_completion(success: true, message: "No videos to process")
       return
     end
 
     begin
-      broadcast_progress("Found #{uncommented_videos.size} video(s) to comment on...")
+      broadcast_progress("Found #{videos_to_process.size} video(s) to comment on...")
 
-      uncommented_videos.each_with_index do |video, index|
+      videos_to_process.each_with_index do |video, index|
         @current_step = index + 1
-        broadcast_progress("Processing video #{index + 1}/#{uncommented_videos.size}: #{video.title&.truncate(40)}")
+        broadcast_progress("Processing video #{index + 1}/#{videos_to_process.size}: #{video.title&.truncate(40)}")
 
         post_comment_to_video(video)
-        sleep 4
+        sleep 2
       end
 
-      broadcast_completion(success: true, message: "Posted comments on #{uncommented_videos.size} video(s)")
+      broadcast_completion(success: true, message: "Posted comments on #{videos_to_process.size} video(s)")
 
     rescue StandardError => e
       Rails.logger.error "CommentPostingJob error: #{e.message}\n#{e.backtrace.join("\n")}"
@@ -58,13 +76,19 @@ class CommentPostingJob < ApplicationJob
 
   private
 
-  def find_uncommented_videos
-    commented_video_ids = @project.comments.pluck(:video_id).uniq
-    @project.videos.where.not(id: commented_video_ids)
+  def find_videos_to_process
+    if @video_ids.present?
+      # Manual trigger with specific videos - process these regardless of existing comments
+      @project.videos.where(id: @video_ids)
+    else
+      # Automated run - only process uncommented videos
+      commented_video_ids = @project.comments.pluck(:video_id).uniq
+      @project.videos.where.not(id: commented_video_ids)
+    end
   end
 
   def post_comment_to_video(video)
-    google_account = @google_accounts.sample
+    google_account = @usable_accounts.sample
     broadcast_progress("Generating comment for: #{video.title&.truncate(40)}")
 
     comment_text = generate_comment(video)
@@ -93,6 +117,15 @@ class CommentPostingJob < ApplicationJob
     )
 
     broadcast_progress("Comment posted successfully!")
+  rescue GoogleAccount::TokenNotUsableError => e
+    Rails.logger.warn "Account token not usable: #{e.message}"
+    broadcast_progress("Account #{google_account.display_name} token is not usable, skipping...")
+    @usable_accounts.delete(google_account)  # Remove from pool for this job run
+  rescue Yt::Errors::Unauthorized => e
+    Rails.logger.warn "Account unauthorized: #{e.message}"
+    google_account.mark_as_unauthorized!
+    @usable_accounts.delete(google_account)  # Remove from pool for this job run
+    broadcast_progress("Account #{google_account.display_name} authorization expired, marked as unauthorized")
   rescue Yt::Errors::Forbidden => e
     Rails.logger.warn "Cannot post comment (forbidden): #{e.message}"
     broadcast_progress("Could not post comment: access denied")
@@ -102,16 +135,10 @@ class CommentPostingJob < ApplicationJob
   end
 
   def generate_comment(video)
-    yt_video = Yt::Video.new(id: video.youtube_id)
-    existing_comments = yt_video.comment_threads.take(10).map(&:text_display)
-
     generator = CommentGenerator.new
     comments = generator.generate_comments(
-      product_name: @project.name,
-      product_description: @project.description.to_s,
-      title: video.title,
-      description: video.description,
-      comments: existing_comments,
+      project: @project,
+      video: video,
       num_comments: 1
     )
     comments.first

@@ -1,0 +1,10 @@
+<div class="alert alert-success shadow-lg mb-2 mt-4">
+  <span class="iconify lucide--check size-5"></span>
+  <span><%= message %></span>
+  <%= button_tag type: :button,
+                 class: "btn btn-ghost btn-sm btn-circle ml-auto",
+                 onclick: "this.parentElement.remove()",
+                 "aria-label": "Dismiss" do %>
+    <span class="iconify lucide--x size-4"></span>
+  <% end %>
+</div>

@@ -43,7 +43,7 @@
             <th>Account</th>
             <th>Google ID</th>
             <th>YouTube Handle</th>
-            <th>Connected</th>
+            <th>Last Connected</th>
             <th>Token Status</th>
             <th class="text-right">Actions</th>
           </tr>
@@ -90,30 +90,51 @@
               </td>
               <td>
                 <div class="text-sm">
-                  <%= time_ago_in_words(account.created_at) %> ago
+                  <%= time_ago_in_words(account.updated_at) %> ago
                 </div>
               </td>
               <td>
-                <% if account.token_expired? %>
-                    <span class="badge badge-warning badge-sm gap-1">
-                      <span class="iconify lucide--alert-triangle size-3"></span>
-                      Expired
-                    </span>
+                <% if account.revoked? %>
+                  <span class="badge badge-neutral badge-sm gap-1">
+                    <span class="iconify lucide--ban size-3"></span>
+                    Revoked
+                  </span>
+                <% elsif account.unauthorized? %>
+                  <span class="badge badge-error badge-sm gap-1">
+                    <span class="iconify lucide--alert-circle size-3"></span>
+                    Unauthorized
+                  </span>
+                <% elsif account.token_expired? %>
+                  <span class="badge badge-warning badge-sm gap-1">
+                    <span class="iconify lucide--alert-triangle size-3"></span>
+                    Expired
+                  </span>
                 <% else %>
-                    <span class="badge badge-success badge-sm gap-1">
-                      <span class="iconify lucide--check size-3"></span>
-                      Active
-                    </span>
+                  <span class="badge badge-success badge-sm gap-1">
+                    <span class="iconify lucide--check size-3"></span>
+                    Active
+                  </span>
                 <% end %>
               </td>
               <td class="text-right">
-                <%= button_to google_account_path(account),
-                              method: :delete,
-                              class: "btn btn-ghost btn-sm text-error gap-1",
-                              data: { turbo_confirm: "Are you sure you want to disconnect this Google account?" } do %>
-                  <span class="iconify lucide--unlink size-4"></span>
-                  Disconnect
-                <% end %>
+                <div class="flex items-center justify-end gap-2">
+                  <% if account.revoked? || account.unauthorized? %>
+                    <%= link_to authorize_google_accounts_path,
+                                data: { turbo_prefetch: false },
+                                class: "btn btn-ghost btn-sm text-primary gap-1" do %>
+                      <span class="iconify lucide--refresh-cw size-4"></span>
+                      Reconnect
+                    <% end %>
+                  <% else %>
+                    <%= button_to disconnect_google_account_path(account),
+                                  method: :patch,
+                                  class: "btn btn-ghost btn-sm text-error gap-1",
+                                  data: { turbo_confirm: "Are you sure you want to disconnect this Google account?" } do %>
+                      <span class="iconify lucide--unlink size-4"></span>
+                      Disconnect
+                    <% end %>
+                  <% end %>
+                </div>
               </td>
             </tr>
           <% end %>

@@ -32,10 +32,9 @@ class GoogleAccountsController < ApplicationController
       email: account[:email],
       name: account[:name],
       avatar_url: account[:picture],
-      # youtube_channel_id: fetch_channel_id(account),
-      # youtube_handle: fetch_channel_handle(account),
       access_token: auth.access_token,
       refresh_token: auth.refresh_token,
+      token_status: :active
     )
     google_account.save!
 
@@ -50,16 +49,27 @@ class GoogleAccountsController < ApplicationController
     redirect_to google_accounts_path, alert: "Could not save account: #{e.message}"
   end
 
-  def destroy
+  def disconnect
     @google_account = current_user.google_accounts.find(params[:id])
-    @google_account.destroy
 
-    # invalidate refresh token on Google side
-    HTTP.post("https://accounts.google.com/o/oauth2/revoke?token=#{@google_account.refresh_token}")
+    # Revoke token on Google side
+    if @google_account.access_token.present?
+      response = HTTP.post("https://accounts.google.com/o/oauth2/revoke?token=#{@google_account.access_token}")
+      Rails.logger.info "Google revoke response: #{response.code}"
+    end
 
+    @google_account.mark_as_revoked!
     redirect_to google_accounts_path, notice: "Google account disconnected."
   rescue ActiveRecord::RecordNotFound
     redirect_to google_accounts_path, alert: "Account not found."
+  end
+
+  def revoke_access
+    @google_account = current_user.google_accounts.find(params[:id])
+    yt_account = Yt::Account.new(refresh_token: @google_account.refresh_token)
+    yt_account.revoke_access!
+    @google_account.update!(access_token: nil, refresh_token: nil)
+    redirect_to google_accounts_path, notice: "Access revoked."
   end
 
   private

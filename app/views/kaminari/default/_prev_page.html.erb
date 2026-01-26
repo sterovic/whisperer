@@ -6,6 +6,12 @@
     per_page:      number of items to fetch per page
     remote:        data-remote
 -%>
-<span class="prev">
-  <%= link_to_unless current_page.first?, t('views.pagination.previous').html_safe, url, rel: 'prev', remote: remote %>
-</span>
+<% if current_page.first? %>
+  <span class="btn btn-sm join-item btn-disabled" aria-disabled="true" aria-label="Previous page">
+    <span class="iconify lucide--chevron-left size-4"></span>
+  </span>
+<% else %>
+  <%= link_to url, class: "btn btn-sm join-item", rel: "prev", remote: remote, "aria-label": "Previous page" do %>
+    <span class="iconify lucide--chevron-left size-4"></span>
+  <% end %>
+<% end %>

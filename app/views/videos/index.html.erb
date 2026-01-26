@@ -1,6 +1,6 @@
 <% content_for :title, "Videos - Whisperer" %>
 
-<div>
+<div data-controller="video-selection">
   <!-- Page Header -->
   <div class="mb-6">
     <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
@@ -21,10 +21,12 @@
           <% end %>
         </p>
       </div>
-      <%= link_to import_videos_path, class: "btn btn-primary btn-sm gap-2" do %>
-        <span class="iconify lucide--plus size-4"></span>
-        Import Videos
-      <% end %>
+      <div class="flex items-center gap-2">
+        <%= link_to import_videos_path, class: "btn btn-primary btn-sm gap-2" do %>
+          <span class="iconify lucide--plus size-4"></span>
+          Import Videos
+        <% end %>
+      </div>
     </div>
   </div>
 
@@ -33,24 +35,72 @@
       <span class="iconify lucide--alert-triangle size-5"></span>
       <span>Please select a project to view and manage videos.</span>
     </div>
-  <% elsif @videos.empty? %>
-    <!-- Empty State -->
-    <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
-      <span class="iconify lucide--video-off size-16 text-base-content/30 mx-auto mb-4"></span>
-      <h3 class="text-lg font-semibold mb-2">No videos yet</h3>
-      <p class="text-base-content/60 mb-6">Import YouTube videos to get started with your project.</p>
-      <%= link_to import_videos_path, class: "btn btn-primary gap-2" do %>
-        <span class="iconify lucide--plus size-4"></span>
-        Import Your First Videos
-      <% end %>
-    </div>
   <% else %>
-    <!-- Videos Table -->
-    <div class="bg-base-100 rounded-box border border-base-300 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="table table-sm">
-          <thead>
+    <!-- Filter Bar -->
+    <div class="flex items-center justify-between gap-4 mb-4">
+      <div class="flex items-center gap-3">
+        <!-- Filter Dropdown -->
+        <div class="flex items-center gap-2">
+          <%= form_with url: videos_path, method: :get, data: { turbo_frame: "_top" }, class: "inline flex center gap-2" do |f| %>
+            <%= label_tag :filter, "Filter:", class: "text-sm text-base-content/60" %>
+            <%= select_tag :filter,
+                           options_for_select([
+                                                ["All Videos", ""],
+                                                ["No Comments", "no_comments"],
+                                                ["Has Comments", "has_comments"],
+                                                ["With Visible", "visible"],
+                                                ["With Hidden", "hidden"],
+                                                ["With Removed", "removed"]
+                                              ], @filter),
+                           class: "select select-sm select-bordered",
+                           onchange: "this.form.submit()" %>
+          <% end %>
+        </div>
+
+        <!-- Selection Info -->
+        <div class="text-sm text-base-content/60" data-video-selection-target="selectionInfo">
+          <!-- Updated by Stimulus -->
+        </div>
+      </div>
+
+      <!-- Bulk Actions -->
+      <div class="flex items-center gap-2 hidden" data-video-selection-target="bulkActions">
+        <%= form_with url: bulk_post_comments_videos_path, method: :post, data: { turbo: true } do |f| %>
+          <div data-video-selection-target="videoIdsContainer"></div>
+          <%= button_tag type: :submit, class: "btn btn-secondary btn-sm gap-2" do %>
+            <span class="iconify lucide--message-square-plus size-4"></span>
+            Post Comments
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @videos.empty? %>
+      <!-- Empty State (after filter) -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
+        <span class="iconify lucide--filter-x size-16 text-base-content/30 mx-auto mb-4"></span>
+        <h3 class="text-lg font-semibold mb-2">No videos match filter</h3>
+        <p class="text-base-content/60 mb-6">Try changing the filter or import more videos.</p>
+        <%= link_to videos_path, class: "btn btn-ghost gap-2" do %>
+          <span class="iconify lucide--x size-4"></span>
+          Clear Filter
+        <% end %>
+      </div>
+    <% else %>
+      <!-- Videos Table -->
+      <div class="bg-base-100 rounded-box border border-base-300 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
             <tr class="bg-base-200/50">
+              <th class="w-10 text-center">
+                <%= label_tag :select_all_videos, "Select all videos", class: "sr-only" %>
+                <%= check_box_tag :select_all_videos,
+                                  "1",
+                                  false,
+                                  class: "checkbox checkbox-sm",
+                                  data: { video_selection_target: "selectAll", action: "change->video-selection#toggleAll" } %>
+              </th>
               <th class="w-20">Thumb</th>
               <th>Video</th>
               <th class="text-center w-24">Activity</th>
@@ -60,40 +110,56 @@
               <th class="text-center w-20">Rank</th>
               <th class="w-24"></th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             <% @videos.each do |video| %>
               <tr class="hover:bg-base-200/30">
+                <!-- Checkbox -->
+                <td class="text-center">
+                  <%= label_tag "select_video_#{video.id}", "Select #{video.title&.truncate(30) || 'video'}", class: "sr-only" %>
+                  <%= check_box_tag "select_video_#{video.id}",
+                                    video.id,
+                                    false,
+                                    class: "checkbox checkbox-sm",
+                                    data: { video_selection_target: "checkbox", action: "change->video-selection#updateSelection", video_id: video.id } %>
+                </td>
+
                 <!-- Thumbnail -->
                 <td class="p-2">
-                  <a href="https://youtube.com/watch?v=<%= video.youtube_id %>" target="_blank" class="block">
+                  <%= link_to "https://youtube.com/watch?v=#{video.youtube_id}", target: "_blank", class: "block" do %>
                     <% if video.thumbnail_url.present? %>
-                      <%= image_tag video.thumbnail_url, alt: "", class: "w-16 h-10 object-cover rounded" %>
+                      <%= image_tag video.thumbnail_url, alt: video.title, class: "w-16 h-10 object-cover rounded" %>
                     <% else %>
                       <div class="w-16 h-10 bg-base-200 rounded flex items-center justify-center">
                         <span class="iconify lucide--video size-4 text-base-content/30"></span>
                       </div>
                     <% end %>
-                  </a>
+                  <% end %>
                 </td>
 
                 <!-- Title -->
                 <td class="max-w-xs">
-                  <a href="https://youtube.com/watch?v=<%= video.youtube_id %>" target="_blank"
-                     class="font-medium text-sm line-clamp-2 hover:text-primary transition-colors"
-                     title="<%= video.title %>">
+                  <%= link_to "https://youtube.com/watch?v=#{video.youtube_id}",
+                              target: "_blank",
+                              class: "font-medium text-sm line-clamp-2 hover:text-primary transition-colors",
+                              title: video.title do %>
                     <%= video.title || "Untitled" %>
-                  </a>
+                  <% end %>
                 </td>
 
                 <!-- Comment Activity Sparkline (lazy loaded) -->
                 <td class="text-center">
-                  <%= turbo_frame_tag "video_#{video.id}_sparkline",
-                                      src: comment_frequency_video_path(video),
-                                      loading: :lazy do %>
-                    <div class="flex items-center justify-center h-6">
-                      <span class="loading loading-dots loading-xs text-base-content/30"></span>
-                    </div>
+                  <% enable_comment_frequency = false %>
+                  <% if enable_comment_frequency %>
+                    <%= turbo_frame_tag "video_#{video.id}_sparkline",
+                                        src: comment_frequency_video_path(video),
+                                        loading: :lazy do %>
+                      <div class="flex items-center justify-center h-6">
+                        <span class="loading loading-dots loading-xs text-base-content/30"></span>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
                   <% end %>
                 </td>
 
@@ -169,11 +235,17 @@
                 </td>
               </tr>
             <% end %>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    <% end %>
   <% end %>
+
+  <!-- Job Progress Container -->
+  <div id="job_progress_container" class="mt-6 space-y-4">
+    <!-- Progress cards will be inserted here via Turbo Streams -->
+  </div>
 </div>
 
 <!-- Subscribe to job progress updates -->

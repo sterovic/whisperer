@@ -1,0 +1,14 @@
+<%= turbo_stream.prepend "flash_messages" do %>
+  <%= render "shared/flash_notice", message: "Comment posting job started for #{@video_ids.size} video(s)" %>
+<% end %>
+
+<%= turbo_stream.append "job_progress_container" do %>
+  <%= render "jobs/progress",
+             job_id: @job_id,
+             job_name: "Comment Posting",
+             step: 0,
+             total_steps: @video_ids.size,
+             message: "Starting comment posting...",
+             percentage: 0,
+             status: :running %>
+<% end %>

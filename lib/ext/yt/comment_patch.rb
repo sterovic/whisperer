@@ -78,6 +78,10 @@ module Yt
       def comments
         @comments ||= Collections::Comments.new(auth: self)
       end
+
+      def access_token_was_refreshed
+        puts "access token was refreshed"
+      end
     end
   end
 end

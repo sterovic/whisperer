@@ -154,7 +154,7 @@ class CommentGenerator
     sections << ""
     sections << "Requirements:"
     sections << "- All comments must feel distinct from each other (not just tiny wording changes)."
-    sections << "- Respect the preferences below for length, language and #{product_name}."
+    sections << "- Respect the preferences below for length, language and #{product_name} mentioning."
     sections << "- Each comment should be independently postable on the video."
     sections << ""
 
