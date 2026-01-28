@@ -1,6 +1,7 @@
 class Video < ApplicationRecord
   belongs_to :project
   has_many :comments, dependent: :destroy
+  has_many :smm_orders, dependent: :nullify
 
   validates :youtube_id, presence: true
   validates :youtube_id, uniqueness: { scope: :project_id, message: "already exists in this project" }

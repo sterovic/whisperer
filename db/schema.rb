@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_26_211938) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_27_193100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,10 +22,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_211938) do
     t.integer "status", default: 0, null: false
     t.integer "like_count", default: 0
     t.integer "rank"
-    t.bigint "google_account_id", null: false
+    t.bigint "google_account_id"
     t.bigint "project_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "post_type", default: 0
+    t.string "author_display_name", default: "", null: false
+    t.string "author_avatar_url", default: "", null: false
     t.index ["google_account_id"], name: "index_comments_on_google_account_id"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["project_id"], name: "index_comments_on_project_id"
@@ -176,6 +179,45 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_211938) do
     t.jsonb "prompt_settings", default: {}, null: false
   end
 
+  create_table "smm_orders", force: :cascade do |t|
+    t.bigint "smm_panel_credential_id", null: false
+    t.bigint "project_id", null: false
+    t.bigint "video_id"
+    t.bigint "comment_id"
+    t.string "external_order_id"
+    t.integer "service_type", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.integer "quantity"
+    t.decimal "charge", precision: 10, scale: 5
+    t.integer "start_count"
+    t.integer "remains"
+    t.string "currency"
+    t.string "link"
+    t.jsonb "raw_response", default: {}
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["comment_id"], name: "index_smm_orders_on_comment_id"
+    t.index ["external_order_id"], name: "index_smm_orders_on_external_order_id"
+    t.index ["project_id"], name: "index_smm_orders_on_project_id"
+    t.index ["service_type"], name: "index_smm_orders_on_service_type"
+    t.index ["smm_panel_credential_id"], name: "index_smm_orders_on_smm_panel_credential_id"
+    t.index ["status"], name: "index_smm_orders_on_status"
+    t.index ["video_id"], name: "index_smm_orders_on_video_id"
+  end
+
+  create_table "smm_panel_credentials", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "panel_type", null: false
+    t.string "api_key", null: false
+    t.string "comment_service_id"
+    t.string "upvote_service_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "panel_type"], name: "index_smm_panel_credentials_on_user_id_and_panel_type", unique: true
+    t.index ["user_id"], name: "index_smm_panel_credentials_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -226,5 +268,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_211938) do
   add_foreign_key "google_accounts", "users"
   add_foreign_key "project_members", "projects"
   add_foreign_key "project_members", "users"
+  add_foreign_key "smm_orders", "comments"
+  add_foreign_key "smm_orders", "projects"
+  add_foreign_key "smm_orders", "smm_panel_credentials"
+  add_foreign_key "smm_orders", "videos"
+  add_foreign_key "smm_panel_credentials", "users"
   add_foreign_key "videos", "projects"
 end

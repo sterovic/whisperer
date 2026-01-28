@@ -61,6 +61,25 @@ Rails.application.routes.draw do
   # Comments management
   resources :comments, only: [:index]
 
+  # SMM Panels
+  namespace :smm_panels do
+    resources :jap, only: [:index] do
+      collection do
+        patch :index, action: :update
+        post :test_connection
+        get :services
+      end
+    end
+  end
+
+  # SMM Orders (all panels)
+  resources :smm_orders, only: [:index]
+
+  # Settings namespace
+  namespace :settings do
+    resource :project, only: [:show, :update], controller: "project"
+  end
+
   # Prompt settings (project-level AI configuration)
   resource :prompt_settings, only: [:show, :update] do
     post :test

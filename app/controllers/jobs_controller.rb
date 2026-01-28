@@ -5,6 +5,7 @@ class JobsController < ApplicationController
     # Ensure job schedules exist
     JobSchedule.for("CommentStatusCheckJob")
     JobSchedule.for("CommentPostingJob")
+    JobSchedule.for("SmmOrderStatusCheckJob")
 
     @job_schedules = JobSchedule.order(:job_class)
   end

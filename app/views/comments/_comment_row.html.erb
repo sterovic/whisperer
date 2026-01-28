@@ -27,19 +27,33 @@
   </td>
   <td>
     <div class="flex items-center gap-2">
-      <% if comment.google_account %>
-        <% if comment.google_account.avatar_url.present? %>
-          <%= image_tag comment.google_account.avatar_url, referrer_policy: "no-referrer", class: "w-6 h-6 rounded-full", alt: "" %>
-        <% else %>
-          <div class="w-6 h-6 rounded-full bg-base-200 flex items-center justify-center">
-            <span class="iconify lucide--user size-3.5 text-base-content/50"></span>
-          </div>
-        <% end %>
-        <span class="text-sm"><%= comment.google_account.display_name %></span>
-      <% else %>
-        <span class="text-base-content/50 text-sm">-</span>
-      <% end %>
+      <%= author_profile_image(comment) %>
+      <span class="text-sm"><%= author_display_name(comment) %></span>
     </div>
+  </td>
+  <td class="whitespace-nowrap">
+    <% post_type_class = case comment.post_type
+                         when "via_api" then "badge-info"
+                         when "via_smm" then "badge-secondary"
+                         when "manual" then "badge-ghost"
+                         else "badge-ghost"
+                         end %>
+    <span class="badge badge-soft badge-outline badge-sm <%= post_type_class %> gap-1 whitespace-nowrap">
+      <% case comment.post_type %>
+      <% when "via_api" %>
+        <span class="iconify lucide--cloud size-3"></span>
+        API
+      <% when "via_smm" %>
+        <span class="iconify lucide--share-2 size-3"></span>
+        SMM
+      <% when "manual" %>
+        <span class="iconify lucide--pen size-3"></span>
+        Manual
+      <% else %>
+        <span class="iconify lucide--help-circle size-3"></span>
+        Unknown
+      <% end %>
+    </span>
   </td>
   <td class="whitespace-nowrap">
     <% badge_class = case comment.status
@@ -78,7 +92,7 @@
 <% end %>
 <% if comment.replies.any? %>
   <tr data-collapsible-target="content" class="hidden" id="comment_<%= comment.id %>_replies">
-    <td colspan="8" class="bg-base-200/50 p-0">
+    <td colspan="9" class="bg-base-200/50 p-0">
       <div class="pl-12 py-2">
         <table class="table table-sm">
           <thead>

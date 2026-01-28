@@ -38,11 +38,24 @@ class CommentPostingJob < ApplicationJob
     @user = User.find(user_id)
     @project = Project.find(project_id)
     @job_id = provider_job_id || job_id
-    @usable_accounts = @user.google_accounts.usable.to_a
 
-    if @usable_accounts.empty?
-      broadcast_error("No usable Google accounts. Please connect or reconnect an account.")
-      return
+    # Check comment posting method
+    if @project.use_smm_panel?
+      @smm_credential = @user.smm_panel_credentials.find_by(panel_type: @project.prompt_setting(:smm_panel_type))
+      if @smm_credential.nil?
+        broadcast_error("SMM Panel not configured. Please configure your SMM panel in settings.")
+        return
+      end
+      if @smm_credential.comment_service_id.blank?
+        broadcast_error("Comment service ID not set for SMM panel. Please configure it in SMM Panels settings.")
+        return
+      end
+    else
+      @usable_accounts = @user.google_accounts.usable.to_a
+      if @usable_accounts.empty?
+        broadcast_error("No usable Google accounts. Please connect or reconnect an account.")
+        return
+      end
     end
 
     videos_to_process = find_videos_to_process
@@ -88,15 +101,24 @@ class CommentPostingJob < ApplicationJob
   end
 
   def post_comment_to_video(video)
-    google_account = @usable_accounts.sample
     broadcast_progress("Generating comment for: #{video.title&.truncate(40)}")
+    uses_yt_api = @project.use_smm_panel? ? false : true
 
-    comment_text = generate_comment(video)
-    if comment_text.blank?
-      broadcast_progress("Could not generate comment, skipping...")
+    comments = generate_comments(video, uses_yt_api ? 1 : @project.prompt_setting(:num_comments))
+    if comments.blank?
+      broadcast_progress("Could not generate comments, skipping...")
       return
     end
 
+    if uses_yt_api
+      post_comment_via_youtube_api(video, comments.first)
+    else
+      post_comment_via_smm_panel(video, comments)
+    end
+  end
+
+  def post_comment_via_youtube_api(video, comment_text)
+    google_account = @usable_accounts.sample
     broadcast_progress("Posting comment as #{google_account.display_name}...")
 
     yt_account = google_account.yt_account
@@ -113,18 +135,21 @@ class CommentPostingJob < ApplicationJob
       google_account: google_account,
       project: @project,
       youtube_comment_id: youtube_comment_id,
-      status: :visible
+      status: :visible,
+      author_display_name: yt_response.author_display_name,
+      author_avatar_url: yt_response.author_profile_image_url,
+      post_type: :via_api
     )
 
     broadcast_progress("Comment posted successfully!")
   rescue GoogleAccount::TokenNotUsableError => e
     Rails.logger.warn "Account token not usable: #{e.message}"
     broadcast_progress("Account #{google_account.display_name} token is not usable, skipping...")
-    @usable_accounts.delete(google_account)  # Remove from pool for this job run
+    @usable_accounts.delete(google_account) # Remove from pool for this job run
   rescue Yt::Errors::Unauthorized => e
     Rails.logger.warn "Account unauthorized: #{e.message}"
     google_account.mark_as_unauthorized!
-    @usable_accounts.delete(google_account)  # Remove from pool for this job run
+    @usable_accounts.delete(google_account) # Remove from pool for this job run
     broadcast_progress("Account #{google_account.display_name} authorization expired, marked as unauthorized")
   rescue Yt::Errors::Forbidden => e
     Rails.logger.warn "Cannot post comment (forbidden): #{e.message}"
@@ -134,14 +159,47 @@ class CommentPostingJob < ApplicationJob
     broadcast_progress("Could not post comment: #{e.message.truncate(50)}")
   end
 
-  def generate_comment(video)
+  def post_comment_via_smm_panel(video, comments)
+    broadcast_progress("Posting comments via #{@smm_credential.display_name}...")
+
+    video_url = "https://www.youtube.com/watch?v=#{video.youtube_id}"
+    adapter = @smm_credential.adapter
+
+    result = adapter.bulk_comment(
+      video_url: video_url,
+      comments: comments,
+      service_id: @smm_credential.comment_service_id
+    )
+
+    if result[:success]
+      # Create SMM order record
+      order = SmmOrder.create!(
+        smm_panel_credential: @smm_credential,
+        project: @project,
+        video: video,
+        external_order_id: result[:order_id],
+        service_type: :comment,
+        status: :pending,
+        quantity: comments.size,
+        link: video_url
+      )
+
+      broadcast_progress("Comment order placed! Order ID: #{result[:order_id]}")
+    else
+      broadcast_progress("SMM Panel error: #{result[:error]}")
+    end
+  rescue SmmAdapters::BaseAdapter::ApiError => e
+    Rails.logger.warn "SMM Panel error: #{e.message}"
+    broadcast_progress("SMM Panel error: #{e.message.truncate(50)}")
+  end
+
+  def generate_comments(video, comment_count = 1)
     generator = CommentGenerator.new
-    comments = generator.generate_comments(
+    generator.generate_comments(
       project: @project,
       video: video,
-      num_comments: 1
+      num_comments: comment_count
     )
-    comments.first
   rescue => e
     Rails.logger.error "Error generating comment: #{e.message}"
     nil

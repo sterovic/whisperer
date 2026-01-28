@@ -83,5 +83,11 @@ module Yt
         puts "access token was refreshed"
       end
     end
+
+    class CommentThread
+      def author_profile_image_url
+        top_level_comment.snippet.data["authorProfileImageUrl"]
+      end
+    end
   end
 end

@@ -1,0 +1,208 @@
+<% content_for :title, "JAP (Just Another Panel) - Whisperer" %>
+
+<div>
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="block iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span>SMM Panels</span>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">JAP</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Just Another Panel (JAP)</h1>
+        <p class="text-base-content/60 text-sm mt-1">Configure your JAP API credentials and manage orders</p>
+      </div>
+      <% if @balance %>
+        <div class="bg-base-100 rounded-box border border-base-300 px-4 py-2">
+          <span class="text-base-content/60 text-sm">Balance:</span>
+          <span class="font-bold text-success"><%= number_with_precision(@balance[:balance], precision: 2) %> <%= @balance[:currency] %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Orders Table (Full Width at Top) -->
+  <div class="mb-6">
+    <div class="bg-base-100 rounded-box border border-base-300 overflow-hidden">
+      <div class="px-6 py-4 border-b border-base-300">
+        <h2 class="text-lg font-semibold flex items-center gap-2">
+          <span class="iconify lucide--shopping-cart size-5 text-base-content/70"></span>
+          Orders
+        </h2>
+        <p class="text-base-content/60 text-sm">Track your SMM orders for this project</p>
+      </div>
+
+      <% if @orders.empty? %>
+        <div class="p-12 text-center">
+          <span class="iconify lucide--shopping-cart size-12 text-base-content/30 mx-auto mb-4"></span>
+          <h3 class="text-lg font-semibold mb-2">No orders yet</h3>
+          <p class="text-base-content/60">Orders placed through JAP will appear here.</p>
+        </div>
+      <% else %>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+            <tr class="bg-base-200">
+              <th>Order ID</th>
+              <th>Type</th>
+              <th>Link</th>
+              <th>Status</th>
+              <th>Quantity</th>
+              <th>Charge</th>
+              <th>Last Updated</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% @orders.each do |order| %>
+              <tr class="hover">
+                <td>
+                  <code class="bg-base-200 px-2 py-1 rounded text-xs"><%= order.external_order_id || "N/A" %></code>
+                </td>
+                <td>
+                    <span class="badge badge-ghost badge-sm gap-1">
+                      <% if order.comment? %>
+                        <span class="iconify lucide--message-circle size-3"></span>
+                        Comment
+                      <% else %>
+                        <span class="iconify lucide--thumbs-up size-3"></span>
+                        Upvote
+                      <% end %>
+                    </span>
+                </td>
+                <td>
+                  <% if order.link.present? %>
+                    <a href="<%= order.link %>" target="_blank" class="link link-primary text-xs truncate max-w-[200px] block">
+                      <%= truncate(order.link, length: 40) %>
+                    </a>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+                <td>
+                    <span class="truncate badge <%= order.status_badge_class %> badge-sm">
+                      <%= order.status.humanize %>
+                    </span>
+                </td>
+                <td><%= order.quantity || "-" %></td>
+                <td>
+                  <% if order.charge %>
+                    <div class="truncate">
+                      <span class="font-mono text-sm"><%= number_with_precision(order.charge, precision: 5) %></span>
+                      <span class="text-base-content/60 text-xs"><%= order.currency %></span>
+                    </div>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                  <td class="truncate text-sm text-base-content/60">
+                    <%= time_ago_in_words(order.updated_at) %> ago
+                  </td>
+                  </tr>
+            <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <% if @orders.respond_to?(:total_pages) && @orders.total_pages > 1 %>
+          <div class="px-6 py-4 border-t border-base-300">
+            <%= paginate @orders %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Settings Section (Below Table) -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <!-- API Configuration -->
+    <div>
+      <%= form_with model: @credential, url: smm_panels_jap_index_path, method: :patch, class: "space-y-6" do |f| %>
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+            <span class="iconify lucide--key size-5 text-base-content/70"></span>
+            API Configuration
+          </h2>
+          <p class="text-sm text-base-content/60 mb-5">
+            Enter your JAP API credentials to enable SMM features.
+          </p>
+
+          <div class="fieldset space-y-5">
+            <div class="space-y-2">
+              <label for="api_key" class="fieldset-label">API Key</label>
+              <input type="password"
+                     id="api_key"
+                     name="smm_panel_credential[api_key]"
+                     value="<%= @credential.api_key %>"
+                     placeholder="Enter your JAP API key"
+                     class="input w-full <%= @credential.errors[:api_key].any? ? 'input-error' : '' %>"
+                     autocomplete="off"/>
+              <% if @credential.errors[:api_key].any? %>
+                <p class="text-xs text-error"><%= @credential.errors[:api_key].first %></p>
+              <% else %>
+                <p class="text-xs text-base-content/50">Your API key from justanotherpanel.com</p>
+              <% end %>
+            </div>
+
+            <div class="space-y-2">
+              <label for="comment_service_id" class="fieldset-label">Comment Service ID</label>
+              <input type="text"
+                     id="comment_service_id"
+                     name="smm_panel_credential[comment_service_id]"
+                     value="<%= @credential.comment_service_id %>"
+                     placeholder="e.g., 1234"
+                     class="input w-full"/>
+              <p class="text-xs text-base-content/50">Service ID for posting YouTube comments</p>
+            </div>
+
+            <div class="space-y-2">
+              <label for="upvote_service_id" class="fieldset-label">Upvote Service ID</label>
+              <input type="text"
+                     id="upvote_service_id"
+                     name="smm_panel_credential[upvote_service_id]"
+                     value="<%= @credential.upvote_service_id %>"
+                     placeholder="e.g., 5678"
+                     class="input w-full"/>
+              <p class="text-xs text-base-content/50">Service ID for upvoting YouTube comments</p>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 mt-6">
+            <% if @credential.persisted? %>
+              <%= button_to test_connection_smm_panels_jap_index_path,
+                            method: :post,
+                            class: "btn btn-ghost gap-1" do %>
+                <span class="iconify lucide--wifi size-4"></span>
+                Test Connection
+              <% end %>
+            <% end %>
+            <%= f.submit "Save Settings", class: "btn btn-primary" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Info Card -->
+    <div>
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3">
+          <span class="iconify lucide--info size-5 text-info mt-0.5"></span>
+          <div class="text-sm">
+            <p class="font-medium mb-2">Getting Started</p>
+            <ol class="text-base-content/70 space-y-1 list-decimal list-inside">
+              <li>Get your API key from
+                <a href="https://justanotherpanel.com/api" target="_blank" class="link link-primary">JAP API page</a>
+              </li>
+              <li>Find the service IDs for comments and upvotes</li>
+              <li>Enter them above and save</li>
+              <li>Test your connection</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

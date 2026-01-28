@@ -1,0 +1,66 @@
+<%= turbo_frame_tag "modal" do %>
+  <dialog class="modal modal-open" data-controller="modal">
+    <div class="modal-box max-w-4xl max-h-[80vh]">
+      <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" data-action="modal#close">
+        <span class="iconify lucide--x size-4"></span>
+      </button>
+
+      <h3 class="text-lg font-bold mb-4">Available JAP Services</h3>
+
+      <% if @error %>
+        <div class="alert alert-error mb-4">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <span><%= @error %></span>
+        </div>
+      <% end %>
+
+      <% if @services.any? %>
+        <div class="overflow-x-auto max-h-[60vh]">
+          <table class="table table-sm">
+            <thead class="sticky top-0 bg-base-100">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Rate</th>
+              <th>Min</th>
+              <th>Max</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% @services.each do |service| %>
+              <tr class="hover">
+                <td>
+                  <code class="bg-base-200 px-2 py-0.5 rounded text-xs"><%= service[:id] %></code>
+                </td>
+                <td class="max-w-xs">
+                  <span class="text-sm"><%= truncate(service[:name], length: 60) %></span>
+                </td>
+                <td>
+                  <span class="badge badge-ghost badge-sm"><%= service[:category] %></span>
+                </td>
+                <td class="font-mono text-sm">$<%= number_with_precision(service[:rate], precision: 4) %></td>
+                <td><%= number_with_delimiter(service[:min]) %></td>
+                <td><%= number_with_delimiter(service[:max]) %></td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-base-content/60 text-sm mt-4">
+          Total: <%= @services.count %> services available
+        </p>
+      <% elsif !@error %>
+        <div class="text-center py-8">
+          <span class="iconify lucide--package-open size-12 text-base-content/30 mx-auto mb-4"></span>
+          <p class="text-base-content/60">No services found.</p>
+        </div>
+      <% end %>
+
+      <div class="modal-action">
+        <button type="button" class="btn" data-action="modal#close">Close</button>
+      </div>
+    </div>
+    <div class="modal-backdrop" data-action="click->modal#close"></div>
+  </dialog>
+<% end %>

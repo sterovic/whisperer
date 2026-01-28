@@ -3,6 +3,7 @@ class Project < ApplicationRecord
   has_many :users, through: :project_members
   has_many :videos, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :smm_orders, dependent: :destroy
 
   validates :name, presence: true
 
@@ -18,7 +19,10 @@ class Project < ApplicationRecord
                  :include_video_description,
                  :include_existing_comments,
                  :mention_product,
-                 :num_comments
+                 :num_comments,
+                 # Project settings
+                 :comment_method,      # "youtube_api" or "smm_panel"
+                 :smm_panel_type       # "jap" or other panel types
 
   # Default values for prompt settings
   PROMPT_DEFAULTS = {
@@ -32,12 +36,15 @@ class Project < ApplicationRecord
     include_video_description: true,
     include_existing_comments: true,
     mention_product: true,
-    num_comments: 10
+    num_comments: 10,
+    comment_method: "youtube_api",
+    smm_panel_type: nil
   }.freeze
 
   COMMENT_LENGTHS = %w[short medium long].freeze
   TONES = %w[casual friendly enthusiastic professional witty sarcastic].freeze
   MODELS = %w[gpt-4o-mini gpt-4o gpt-4-turbo].freeze
+  COMMENT_METHODS = %w[youtube_api smm_panel].freeze
 
   def prompt_setting(key)
     value = send(key)
@@ -54,5 +61,13 @@ class Project < ApplicationRecord
     else
       value
     end
+  end
+
+  def use_smm_panel?
+    prompt_setting(:comment_method) == "smm_panel"
+  end
+
+  def use_youtube_api?
+    prompt_setting(:comment_method) == "youtube_api"
   end
 end

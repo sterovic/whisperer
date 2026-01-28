@@ -33,3 +33,6 @@ application.register("collapsible", CollapsibleController);
 
 import VideoSelectionController from "./video_selection_controller";
 application.register("video-selection", VideoSelectionController);
+
+import ModalController from "./modal_controller";
+application.register("modal", ModalController);

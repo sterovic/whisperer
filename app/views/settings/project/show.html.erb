@@ -1,0 +1,148 @@
+<% content_for :title, "Project Settings - Whisperer" %>
+
+<div class="max-w-4xl">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="block iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span>Settings</span>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Project</span>
+    </div>
+    <div>
+      <h1 class="text-2xl font-bold">Project Settings</h1>
+      <p class="text-base-content/60 text-sm mt-1">
+        Configure settings for <strong><%= @project.name %></strong>
+      </p>
+    </div>
+  </div>
+
+  <%= form_with model: @project, url: settings_project_path, method: :patch, class: "space-y-6" do |f| %>
+    <!-- General Settings -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-6">
+      <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+        <span class="iconify lucide--folder size-5 text-base-content/70"></span>
+        General
+      </h2>
+      <p class="text-sm text-base-content/60 mb-5">
+        Basic project information.
+      </p>
+
+      <div class="fieldset space-y-5">
+        <div class="space-y-2">
+          <label for="project_name" class="fieldset-label">Project Name</label>
+          <%= f.text_field :name,
+                           id: "project_name",
+                           class: "input w-full #{@project.errors[:name].any? ? 'input-error' : ''}" %>
+          <% if @project.errors[:name].any? %>
+            <p class="text-xs text-error"><%= @project.errors[:name].first %></p>
+          <% end %>
+        </div>
+
+        <div class="space-y-2">
+          <label for="project_description" class="fieldset-label">Description</label>
+          <%= f.text_area :description,
+                          id: "project_description",
+                          rows: 3,
+                          class: "textarea w-full",
+                          placeholder: "Describe your project or product..." %>
+          <p class="text-xs text-base-content/50">
+            This description is used by the AI when generating comments.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comment Posting Method -->
+    <div class="bg-base-100 rounded-box border border-base-300 p-6">
+      <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+        <span class="iconify lucide--message-circle size-5 text-base-content/70"></span>
+        Comment Posting Method
+      </h2>
+      <p class="text-sm text-base-content/60 mb-5">
+        Choose how comments are posted to YouTube videos.
+      </p>
+
+      <div class="fieldset space-y-5">
+        <div class="space-y-4">
+          <label class="flex items-start gap-3 cursor-pointer p-4 rounded-lg border border-base-300 hover:bg-base-200 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+            <%= f.radio_button :comment_method, "youtube_api",
+                               checked: @project.prompt_setting(:comment_method) == "youtube_api",
+                               class: "radio radio-primary mt-1" %>
+            <span class="flex-1">
+              <span class="font-medium flex items-center gap-2">
+                <span class="iconify lucide--youtube size-5 text-red-500"></span>
+                YouTube API
+              </span>
+              <span class="block text-sm text-base-content/60 mt-1">
+                Post comments directly using connected Google accounts. Requires OAuth-authorized accounts.
+              </span>
+            </span>
+          </label>
+
+          <label class="flex items-start gap-3 cursor-pointer p-4 rounded-lg border border-base-300 hover:bg-base-200 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+            <%= f.radio_button :comment_method, "smm_panel",
+                               checked: @project.prompt_setting(:comment_method) == "smm_panel",
+                               class: "radio radio-primary mt-1" %>
+            <span class="flex-1">
+              <span class="font-medium flex items-center gap-2">
+                <span class="iconify lucide--share-2 size-5 text-primary"></span>
+                SMM Panel
+              </span>
+              <span class="block text-sm text-base-content/60 mt-1">
+                Use an external SMM panel service to post comments. Configure your panel in SMM Panels settings.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <!-- SMM Panel Selection (shown when SMM Panel is selected) -->
+        <div class="space-y-2" id="smm_panel_selection">
+          <label for="project_smm_panel_type" class="fieldset-label">Select SMM Panel</label>
+          <% if @smm_panel_credentials.any? %>
+            <%= f.select :smm_panel_type,
+                         @smm_panel_credentials.map { |c| [c.display_name, c.panel_type] },
+                         { include_blank: "Select a panel...", selected: @project.prompt_setting(:smm_panel_type) },
+                         { id: "project_smm_panel_type", class: "select w-full" } %>
+            <p class="text-xs text-base-content/50">
+              Select which SMM panel to use for posting comments.
+            </p>
+          <% else %>
+            <div class="alert alert-warning">
+              <span class="iconify lucide--alert-triangle size-5"></span>
+              <span>No SMM panels configured. <%= link_to "Configure a panel", smm_panels_jap_index_path, class: "link" %> first.</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex justify-end">
+      <%= f.submit "Save Settings", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('input[name="project[comment_method]"]');
+    const smmPanelSelection = document.getElementById('smm_panel_selection');
+
+    function toggleSmmPanelSelection() {
+      const selectedMethod = document.querySelector('input[name="project[comment_method]"]:checked')?.value;
+      if (smmPanelSelection) {
+        smmPanelSelection.style.display = selectedMethod === 'smm_panel' ? 'block' : 'none';
+      }
+    }
+
+    radioButtons.forEach(radio => {
+      radio.addEventListener('change', toggleSmmPanelSelection);
+    });
+
+    toggleSmmPanelSelection();
+  });
+</script>
