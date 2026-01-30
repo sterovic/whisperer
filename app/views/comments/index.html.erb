@@ -57,32 +57,32 @@
                    placeholder="Search comments..."
                    class="grow bg-transparent outline-none"
                    oninput="
-                     clearTimeout(this._t);
+                   clearTimeout(this._t);
                      document.getElementById('search_icon').classList.add('hidden');
                      document.getElementById('search_spinner').classList.remove('hidden');
                      this._t = setTimeout(() => this.form.requestSubmit(), 800);
-                   " />
+                   "/>
           </label>
 
           <!-- Status -->
           <%= select_tag :status,
                          options_for_select([
-                           ["All Statuses", ""],
-                           ["Visible", "visible"],
-                           ["Hidden", "hidden"],
-                           ["Removed", "removed"]
-                         ], params[:status]),
+                                              ["All Statuses", ""],
+                                              ["Visible", "visible"],
+                                              ["Hidden", "hidden"],
+                                              ["Removed", "removed"]
+                                            ], params[:status]),
                          class: "select select-sm select-bordered",
                          onchange: "this.form.requestSubmit()" %>
 
           <!-- Source -->
           <%= select_tag :source,
                          options_for_select([
-                           ["All Sources", ""],
-                           ["API", "via_api"],
-                           ["SMM", "via_smm"],
-                           ["Manual", "manual"]
-                         ], params[:source]),
+                                              ["All Sources", ""],
+                                              ["API", "via_api"],
+                                              ["SMM", "via_smm"],
+                                              ["Manual", "manual"]
+                                            ], params[:source]),
                          class: "select select-sm select-bordered",
                          onchange: "this.form.requestSubmit()" %>
 
@@ -98,10 +98,10 @@
           <!-- Replies -->
           <%= select_tag :replies,
                          options_for_select([
-                           ["All Comments", ""],
-                           ["With Replies", "with"],
-                           ["Without Replies", "without"]
-                         ], params[:replies]),
+                                              ["All Comments", ""],
+                                              ["With Replies", "with"],
+                                              ["Without Replies", "without"]
+                                            ], params[:replies]),
                          class: "select select-sm select-bordered",
                          onchange: "this.form.requestSubmit()" %>
 
@@ -110,11 +110,11 @@
             <span class="iconify lucide--arrow-up-down size-3.5 text-base-content/40 shrink-0"></span>
             <%= select_tag :sort,
                            options_for_select([
-                             ["Newest", "newest"],
-                             ["Oldest", "oldest"],
-                             ["Most Likes", "likes"],
-                             ["Best Rank", "rank"]
-                           ], params[:sort]),
+                                                ["Newest", "newest"],
+                                                ["Oldest", "oldest"],
+                                                ["Most Likes", "likes"],
+                                                ["Best Rank", "rank"]
+                                              ], params[:sort]),
                            class: "select select-sm select-bordered",
                            onchange: "this.form.requestSubmit()" %>
           </div>
@@ -180,17 +180,17 @@
     <% else %>
       <!-- Comments Table -->
       <div class="bg-base-100 rounded-box border border-base-300 overflow-x-auto">
-        <table class="table table-zebra">
+        <table class="table table-zebra w-full">
           <thead>
-          <tr class="bg-base-200">
-            <th class="w-1/4">Comment</th>
-            <th>Video</th>
-            <th>Posted As</th>
-            <th>Source</th>
-            <th>Status</th>
-            <th class="text-center">Likes</th>
-            <th class="text-center">Rank</th>
-            <th>Posted</th>
+          <tr class="bg-base-200/60">
+            <th class="w-1/4 text-xs uppercase tracking-wider text-base-content/50 font-medium">Comment</th>
+            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Video</th>
+            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Posted As</th>
+            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Source</th>
+            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Status</th>
+            <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Likes</th>
+            <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Rank</th>
+            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Posted</th>
             <th></th>
           </tr>
           </thead>
@@ -224,9 +224,12 @@
 
 <% if params[:q].present? %>
   <script>
-    (() => {
-      const el = document.getElementById('comment_search');
-      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
-    })();
+      (() => {
+          const el = document.getElementById('comment_search');
+          if (el) {
+              el.focus();
+              el.setSelectionRange(el.value.length, el.value.length);
+          }
+      })();
   </script>
 <% end %>

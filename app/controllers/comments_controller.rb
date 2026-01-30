@@ -2,7 +2,7 @@ class CommentsController < ApplicationController
   include CommentAuthorHelper
 
   before_action :authenticate_user!
-  before_action :set_comment, only: [:reply_form, :reply]
+  before_action :set_comment, only: [:reply_form, :reply, :upvote]
 
   def index
     @has_comments = current_project&.comments&.top_level&.exists?
@@ -70,6 +70,43 @@ class CommentsController < ApplicationController
         redirect_to comments_path, notice: "Reply job started. #{num_replies} reply(ies) will be posted."
       end
     end
+  end
+
+  def upvote
+    quantity = params[:quantity].to_i
+
+    if quantity < 1
+      redirect_to comments_path(request.query_parameters), alert: "Quantity must be at least 1"
+      return
+    end
+
+    credential = current_user.smm_panel_credentials.find_by(panel_type: "jap")
+    unless credential&.upvote_service_id.present?
+      redirect_to comments_path(request.query_parameters), alert: "JAP panel not configured or upvote service not set"
+      return
+    end
+
+    comment_url = "https://www.youtube.com/watch?v=#{@comment.video.youtube_id}&lc=#{@comment.youtube_comment_id}"
+    result = credential.adapter.upvote_comment(comment_url: comment_url, quantity: quantity, service_id: credential.upvote_service_id)
+
+    if result[:success]
+      SmmOrder.create!(
+        smm_panel_credential: credential,
+        project: current_project,
+        video: @comment.video,
+        comment: @comment,
+        external_order_id: result[:order_id],
+        service_type: :upvote,
+        status: :pending,
+        quantity: quantity,
+        link: comment_url
+      )
+      redirect_to comments_path(request.query_parameters), notice: "Upvote order placed! #{quantity} likes ordered."
+    else
+      redirect_to comments_path(request.query_parameters), alert: "SMM Panel error: #{result[:error]}"
+    end
+  rescue SmmAdapters::BaseAdapter::ApiError => e
+    redirect_to comments_path(request.query_parameters), alert: "SMM Panel error: #{e.message}"
   end
 
   private

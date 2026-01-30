@@ -63,6 +63,7 @@ Rails.application.routes.draw do
     member do
       get :reply_form
       post :reply
+      post :upvote
     end
   end
 
