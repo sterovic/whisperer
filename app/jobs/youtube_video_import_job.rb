@@ -1,10 +1,12 @@
 class YouTubeVideoImportJob < ApplicationJob
   queue_as :default
 
-  def perform(user_id, project_id, urls_text)
+  def perform(user_id, project_id, urls_text, options = {})
     @user = User.find(user_id)
     @project = Project.find(project_id)
     @job_id = provider_job_id || job_id
+    @import_existing_comments = options[:import_existing_comments] || false
+    @imported_comments_count = 0
 
     urls = parse_urls(urls_text)
     @total_steps = urls.size + 1 # +1 for initialization step
@@ -25,10 +27,17 @@ class YouTubeVideoImportJob < ApplicationJob
         @current_step = index + 2
         broadcast_progress("Fetching video #{index + 1}/#{urls.size}: #{youtube_id}")
 
-        fetch_and_store_video(youtube_id, url)
+        video = fetch_and_store_video(youtube_id, url)
+
+        if video && @import_existing_comments
+          broadcast_progress("Scanning comments for #{@project.name}...")
+          import_existing_comments(video)
+        end
       end
 
-      broadcast_completion(success: true, message: "Successfully imported #{urls.size} video(s)")
+      message = "Successfully imported #{urls.size} video(s)"
+      message += " and #{@imported_comments_count} comment(s)" if @imported_comments_count > 0
+      broadcast_completion(success: true, message: message)
 
     rescue StandardError => e
       Rails.logger.error "YouTubeVideoImportJob error: #{e.message}\n#{e.backtrace.join("\n")}"
@@ -45,6 +54,48 @@ class YouTubeVideoImportJob < ApplicationJob
       .map(&:strip)
       .reject(&:blank?)
       .uniq
+  end
+
+  def import_existing_comments(video)
+    return unless video
+
+    yt_video = Yt::Video.new(id: video.youtube_id)
+    product_name = @project.name
+
+    existing_youtube_ids = video.comments.pluck(:youtube_comment_id).compact
+    rank = 0
+    video_imported_count = 0
+
+    # Fetch comment threads ordered by relevance
+    yt_video.comment_threads.where(order: :time).each do |thread|
+      text = thread.text_display
+      next unless text_contains_product_name?(text, product_name)
+      next if existing_youtube_ids.include?(thread.id)
+
+      Comment.create!(
+        video: video,
+        project: @project,
+        youtube_comment_id: thread.id,
+        text: text,
+        author_display_name: thread.author_display_name,
+        author_avatar_url: thread.author_profile_image_url,
+        like_count: thread.like_count || 0,
+        status: :visible,
+        post_type: :manual
+      )
+
+      video_imported_count += 1
+      @imported_comments_count += 1
+      existing_youtube_ids << thread.id
+    end
+
+    broadcast_progress("Found #{video_imported_count} comment(s) mentioning #{@project.name}") if video_imported_count > 0
+  rescue Yt::Errors::Forbidden => e
+    Rails.logger.warn "Comments disabled for video #{video.youtube_id}: #{e.message}"
+    broadcast_progress("Comments disabled on this video")
+  rescue Yt::Errors::RequestError => e
+    Rails.logger.warn "Error fetching comments for video #{video.youtube_id}: #{e.message}"
+    broadcast_progress("Could not fetch comments: #{e.message.truncate(50)}")
   end
 
   def fetch_and_store_video(youtube_id, original_url)
@@ -156,5 +207,24 @@ class YouTubeVideoImportJob < ApplicationJob
         status: :failed
       }
     )
+  end
+
+  # Checks if text contains the product name, handling variations like:
+  # - Different cases: "FAMESTER", "famester", "FaMeStEr"
+  # - Dots between letters: "f.a.m.e.s.t.e.r"
+  # - Spaces between letters: "F a M e S t E r"
+  # - Other separators: "f-a-m-e-s-t-e-r", "f_a_m_e_s_t_e_r"
+  def text_contains_product_name?(text, product_name)
+    # Normalize by removing common separators and converting to lowercase
+    normalized_text = normalize_for_matching(text)
+    normalized_product = normalize_for_matching(product_name)
+
+    normalized_text.include?(normalized_product)
+  end
+
+  def normalize_for_matching(str)
+    # Remove dots, spaces, dashes, underscores and other common separators
+    # Then downcase for case-insensitive matching
+    str.gsub(/[\s.\-_*]+/, "").downcase
   end
 end

@@ -84,6 +84,12 @@ module Yt
       end
     end
 
+    class Comment
+      def author_profile_image_url
+        snippet.data["authorProfileImageUrl"]
+      end
+    end
+
     class CommentThread
       def author_profile_image_url
         top_level_comment.snippet.data["authorProfileImageUrl"]

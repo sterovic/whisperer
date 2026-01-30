@@ -78,7 +78,8 @@ class PromptSettingsController < ApplicationController
       :include_video_description,
       :include_existing_comments,
       :mention_product,
-      :num_comments
+      :num_comments,
+      :reply_prompt
     )
   end
 end

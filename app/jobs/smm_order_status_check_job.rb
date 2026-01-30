@@ -80,7 +80,7 @@ class SmmOrderStatusCheckJob < ApplicationJob
                          author: ct.author_display_name,
                          image_url: ct.author_profile_image_url
                        } }
-                       .select { |c| c[:text].include?(order.project.name) }
+                       .select { |c| c[:text].match?(/#{Regexp.escape(order.project.name)}/i) }
                        .reject { |c| c[:id].in?(existing_youtube_comments) }
 
     Comment.import!(comments, video, post_type: :via_smm) if comments.any?

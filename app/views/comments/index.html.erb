@@ -16,6 +16,9 @@
         <p class="text-base-content/60 text-sm mt-1">
           <% if current_project %>
             <%= pluralize(@comments.total_count, "comment") %> in <%= current_project.name %>
+            <% if any_filters_active? %>
+              <span class="text-base-content/40">(filtered)</span>
+            <% end %>
           <% else %>
             Select a project to view comments
           <% end %>
@@ -29,8 +32,8 @@
       <span class="iconify lucide--alert-triangle size-5"></span>
       <span>Please select a project to view and manage comments.</span>
     </div>
-  <% elsif @comments.empty? %>
-    <!-- Empty State -->
+  <% elsif !@has_comments %>
+    <!-- Empty State - No comments at all -->
     <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
       <span class="iconify lucide--message-circle-off size-16 text-base-content/30 mx-auto mb-4"></span>
       <h3 class="text-lg font-semibold mb-2">No comments yet</h3>
@@ -41,6 +44,92 @@
       <% end %>
     </div>
   <% else %>
+    <!-- Filter Bar -->
+    <%= form_with url: comments_path, method: :get, data: { turbo_frame: "_top" }, class: "mb-4" do %>
+      <div class="bg-base-100 rounded-box border border-base-300 p-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Search -->
+          <label class="input input-sm input-bordered flex items-center gap-2 flex-1 min-w-[200px]">
+            <span class="block iconify lucide--search size-4 text-base-content/40" id="search_icon"></span>
+            <span class="loading loading-spinner loading-xs text-base-content/40 hidden" id="search_spinner"></span>
+            <input type="text" name="q" value="<%= params[:q] %>"
+                   id="comment_search"
+                   placeholder="Search comments..."
+                   class="grow bg-transparent outline-none"
+                   oninput="
+                     clearTimeout(this._t);
+                     document.getElementById('search_icon').classList.add('hidden');
+                     document.getElementById('search_spinner').classList.remove('hidden');
+                     this._t = setTimeout(() => this.form.requestSubmit(), 800);
+                   " />
+          </label>
+
+          <!-- Status -->
+          <%= select_tag :status,
+                         options_for_select([
+                           ["All Statuses", ""],
+                           ["Visible", "visible"],
+                           ["Hidden", "hidden"],
+                           ["Removed", "removed"]
+                         ], params[:status]),
+                         class: "select select-sm select-bordered",
+                         onchange: "this.form.requestSubmit()" %>
+
+          <!-- Source -->
+          <%= select_tag :source,
+                         options_for_select([
+                           ["All Sources", ""],
+                           ["API", "via_api"],
+                           ["SMM", "via_smm"],
+                           ["Manual", "manual"]
+                         ], params[:source]),
+                         class: "select select-sm select-bordered",
+                         onchange: "this.form.requestSubmit()" %>
+
+          <!-- Video -->
+          <%= select_tag :video_id,
+                         options_for_select(
+                           [["All Videos", ""]] + @videos.map { |v| [v.title&.truncate(35) || "Untitled", v.id] },
+                           params[:video_id]
+                         ),
+                         class: "select select-sm select-bordered max-w-[220px]",
+                         onchange: "this.form.requestSubmit()" %>
+
+          <!-- Replies -->
+          <%= select_tag :replies,
+                         options_for_select([
+                           ["All Comments", ""],
+                           ["With Replies", "with"],
+                           ["Without Replies", "without"]
+                         ], params[:replies]),
+                         class: "select select-sm select-bordered",
+                         onchange: "this.form.requestSubmit()" %>
+
+          <!-- Sort -->
+          <div class="flex items-center gap-1.5 border-l border-base-300 pl-3">
+            <span class="iconify lucide--arrow-up-down size-3.5 text-base-content/40 shrink-0"></span>
+            <%= select_tag :sort,
+                           options_for_select([
+                             ["Newest", "newest"],
+                             ["Oldest", "oldest"],
+                             ["Most Likes", "likes"],
+                             ["Best Rank", "rank"]
+                           ], params[:sort]),
+                           class: "select select-sm select-bordered",
+                           onchange: "this.form.requestSubmit()" %>
+          </div>
+
+          <!-- Clear Filters -->
+          <% if any_filters_active? %>
+            <%= link_to comments_path, class: "btn btn-ghost btn-sm gap-1 text-base-content/60" do %>
+              <span class="iconify lucide--x size-4"></span>
+              Clear
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
     <!-- Last Update Info -->
     <div class="bg-base-100 rounded-box border border-base-300 p-4 mb-4" id="last_update_info">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -77,38 +166,67 @@
       </div>
     </div>
 
-    <!-- Comments Table -->
-    <div class="bg-base-100 rounded-box border border-base-300 overflow-x-auto">
-      <table class="table table-zebra">
-        <thead>
-        <tr class="bg-base-200">
-          <th class="w-1/4">Comment</th>
-          <th>Video</th>
-          <th>Posted As</th>
-          <th>Source</th>
-          <th>Status</th>
-          <th class="text-center">Likes</th>
-          <th class="text-center">Rank</th>
-          <th>Posted</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody id="comments_table_body">
-        <% @comments.each do |comment| %>
-          <%= render "comments/comment_row", comment: comment %>
+    <% if @comments.empty? %>
+      <!-- No Results for current filters -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
+        <span class="iconify lucide--search-x size-16 text-base-content/30 mx-auto mb-4"></span>
+        <h3 class="text-lg font-semibold mb-2">No comments match your filters</h3>
+        <p class="text-base-content/60 mb-6">Try adjusting or clearing your filters.</p>
+        <%= link_to comments_path, class: "btn btn-ghost gap-2" do %>
+          <span class="iconify lucide--x size-4"></span>
+          Clear Filters
         <% end %>
-        </tbody>
-      </table>
-    </div>
+      </div>
+    <% else %>
+      <!-- Comments Table -->
+      <div class="bg-base-100 rounded-box border border-base-300 overflow-x-auto">
+        <table class="table table-zebra">
+          <thead>
+          <tr class="bg-base-200">
+            <th class="w-1/4">Comment</th>
+            <th>Video</th>
+            <th>Posted As</th>
+            <th>Source</th>
+            <th>Status</th>
+            <th class="text-center">Likes</th>
+            <th class="text-center">Rank</th>
+            <th>Posted</th>
+            <th></th>
+          </tr>
+          </thead>
+          <% @comments.each do |comment| %>
+            <%= render "comments/comment_row", comment: comment %>
+          <% end %>
+        </table>
+      </div>
 
-    <!-- Pagination -->
-    <div class="mt-6 flex justify-center">
-      <%= paginate @comments, theme: 'default' %>
-    </div>
+      <!-- Pagination -->
+      <div class="mt-6 flex justify-center">
+        <%= paginate @comments, theme: 'default', params: request.query_parameters.except("page") %>
+      </div>
+    <% end %>
   <% end %>
 </div>
 
 <!-- Subscribe to comment updates for this project -->
 <% if current_project %>
   <%= turbo_stream_from "project_#{current_project.id}_comments" %>
+  <%= turbo_stream_from "job_progress_#{current_user.id}" %>
+<% end %>
+
+<!-- Job Progress Container -->
+<div id="job_progress_container" class="mt-6 space-y-4">
+  <!-- Progress cards will be inserted here via Turbo Streams -->
+</div>
+
+<!-- Modal container for reply form -->
+<%= turbo_frame_tag "modal" %>
+
+<% if params[:q].present? %>
+  <script>
+    (() => {
+      const el = document.getElementById('comment_search');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    })();
+  </script>
 <% end %>

@@ -59,7 +59,12 @@ Rails.application.routes.draw do
   end
 
   # Comments management
-  resources :comments, only: [:index]
+  resources :comments, only: [:index] do
+    member do
+      get :reply_form
+      post :reply
+    end
+  end
 
   # SMM Panels
   namespace :smm_panels do

@@ -18,7 +18,7 @@ class CommentStatusCheckJob < ApplicationJob
 
     schedule.touch(:last_run_at)
 
-    visible_comments = Comment.visible.includes(:video, :project)
+    visible_comments = Comment.top_level.visible.includes(:video, :project)
     return if visible_comments.empty?
 
     Rails.logger.info "CommentStatusCheckJob: Checking #{visible_comments.count} visible comments"

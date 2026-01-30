@@ -1,0 +1,18 @@
+<%= turbo_stream.replace "modal" do %>
+  <%= turbo_frame_tag "modal" %>
+<% end %>
+
+<%= turbo_stream.prepend "flash_messages" do %>
+  <%= render "shared/flash_notice", message: "Reply job started. #{@num_replies} reply(ies) will be posted." %>
+<% end %>
+
+<%= turbo_stream.append "job_progress_container" do %>
+  <%= render "jobs/progress",
+             job_id: @job_id,
+             job_name: "Reply Posting",
+             step: 0,
+             total_steps: @num_replies,
+             message: "Starting reply job...",
+             percentage: 0,
+             status: :running %>
+<% end %>

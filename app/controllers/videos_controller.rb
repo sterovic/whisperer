@@ -7,12 +7,12 @@ class VideosController < ApplicationController
                              .left_joins(:comments)
                              .select(
                                "videos.*",
-                               "COUNT(comments.id) AS app_comments_count",
-                               "COUNT(CASE WHEN comments.status = 0 THEN 1 END) AS visible_comments_count",
-                               "COUNT(CASE WHEN comments.status = 1 THEN 1 END) AS hidden_comments_count",
-                               "COUNT(CASE WHEN comments.status = 2 THEN 1 END) AS removed_comments_count",
-                               "COALESCE(SUM(comments.like_count), 0) AS total_comment_likes",
-                               "MIN(comments.rank) AS best_rank"
+                               "COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) AS app_comments_count",
+                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 0 THEN 1 END) AS visible_comments_count",
+                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 1 THEN 1 END) AS hidden_comments_count",
+                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 2 THEN 1 END) AS removed_comments_count",
+                               "COALESCE(SUM(CASE WHEN comments.parent_id IS NULL THEN comments.like_count ELSE 0 END), 0) AS total_comment_likes",
+                               "MIN(CASE WHEN comments.parent_id IS NULL THEN comments.rank END) AS best_rank"
                              )
                              .group("videos.id")
                              .order(created_at: :desc)
@@ -88,10 +88,13 @@ class VideosController < ApplicationController
       return
     end
 
+    import_existing_comments = params[:import_existing_comments] == "1"
+
     job = YouTubeVideoImportJob.perform_later(
       current_user.id,
       current_project.id,
-      urls
+      urls,
+      import_existing_comments: import_existing_comments
     )
 
     respond_to do |format|
@@ -132,15 +135,15 @@ class VideosController < ApplicationController
   def apply_comment_filter(videos, filter)
     case filter
     when "visible"
-      videos.having("COUNT(CASE WHEN comments.status = 0 THEN 1 END) > 0")
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 0 THEN 1 END) > 0")
     when "hidden"
-      videos.having("COUNT(CASE WHEN comments.status = 1 THEN 1 END) > 0")
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 1 THEN 1 END) > 0")
     when "removed"
-      videos.having("COUNT(CASE WHEN comments.status = 2 THEN 1 END) > 0")
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 2 THEN 1 END) > 0")
     when "no_comments"
-      videos.having("COUNT(comments.id) = 0")
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) = 0")
     when "has_comments"
-      videos.having("COUNT(comments.id) > 0")
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) > 0")
     else
       videos
     end

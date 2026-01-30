@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_27_193100) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,7 +35,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_27_193100) do
     t.index ["status"], name: "index_comments_on_status"
     t.index ["video_id", "parent_id"], name: "index_comments_on_video_id_and_parent_id"
     t.index ["video_id"], name: "index_comments_on_video_id"
-    t.index ["youtube_comment_id"], name: "index_comments_on_youtube_comment_id"
+    t.index ["youtube_comment_id"], name: "index_comments_on_youtube_comment_id", unique: true
   end
 
   create_table "good_job_batches", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

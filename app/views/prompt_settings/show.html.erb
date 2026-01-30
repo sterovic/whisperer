@@ -142,6 +142,32 @@
           </div>
         </div>
 
+        <!-- Reply Prompt -->
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+            <span class="iconify lucide--reply size-5 text-base-content/70"></span>
+            Reply Generation
+          </h2>
+          <p class="text-sm text-base-content/60 mb-5">
+            Configure how AI generates replies to comments.
+          </p>
+
+          <div class="fieldset space-y-5">
+            <div class="space-y-2">
+              <label for="project_reply_prompt" class="fieldset-label">Reply Prompt</label>
+              <%= f.text_area :reply_prompt,
+                              id: "project_reply_prompt",
+                              rows: 4,
+                              value: @project.prompt_setting(:reply_prompt),
+                              class: "textarea w-full font-mono text-sm",
+                              placeholder: "Instructions for generating comment replies..." %>
+              <p class="text-xs text-base-content/50">
+                This prompt guides AI when generating replies to comments. The original comment text and video context will be included automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Context Options -->
         <div class="bg-base-100 rounded-box border border-base-300 p-6">
           <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">

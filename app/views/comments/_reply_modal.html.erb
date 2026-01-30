@@ -1,0 +1,94 @@
+<%= turbo_frame_tag "modal" do %>
+  <dialog class="modal modal-open" data-controller="modal">
+    <div class="modal-box max-w-lg">
+      <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" data-action="modal#close">
+        <span class="iconify lucide--x size-4"></span>
+      </button>
+
+      <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+        <span class="iconify lucide--reply size-5 text-primary"></span>
+        Reply to Comment
+      </h3>
+
+      <div class="bg-base-200 rounded-lg p-3 mb-4">
+        <p class="text-sm text-base-content/70 line-clamp-3"><%= comment.text %></p>
+        <% if comment.author_display_name.present? %>
+          <p class="text-xs text-base-content/50 mt-1">by <%= comment.author_display_name %></p>
+        <% end %>
+      </div>
+
+      <% if max_replies == 0 %>
+        <div class="alert alert-warning">
+          <span class="iconify lucide--alert-triangle size-5"></span>
+          <span>No usable Google accounts available. Please connect an account first.</span>
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn" data-action="modal#close">Close</button>
+        </div>
+      <% else %>
+        <%= form_with url: reply_comment_path(comment), method: :post, data: { turbo_stream: true } do |f| %>
+          <div class="fieldset space-y-5">
+            <div class="space-y-2">
+              <label for="reply_count_input" class="fieldset-label">Number of Replies</label>
+              <input type="number"
+                     name="num_replies"
+                     value="1"
+                     min="1"
+                     max="<%= max_replies %>"
+                     class="input w-full"
+                     id="reply_count_input" />
+              <p class="text-xs text-base-content/50">Maximum <%= max_replies %> (one per account)</p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="fieldset-label">Account Selection</label>
+
+              <div class="space-y-2 mt-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio"
+                         name="random_selection"
+                         value="1"
+                         class="radio radio-sm radio-primary"
+                         checked
+                         onchange="document.getElementById('account_selection').classList.add('hidden')" />
+                  <span class="text-sm">Random accounts</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio"
+                         name="random_selection"
+                         value="0"
+                         class="radio radio-sm radio-primary"
+                         onchange="document.getElementById('account_selection').classList.remove('hidden')" />
+                  <span class="text-sm">Select specific accounts</span>
+                </label>
+              </div>
+
+              <div id="account_selection" class="hidden pl-6 space-y-2 mt-2">
+                <% google_accounts.each do |account| %>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox"
+                           name="account_ids[]"
+                           value="<%= account.id %>"
+                           class="checkbox checkbox-sm checkbox-primary account-checkbox"
+                           onchange="document.getElementById('reply_count_input').value = document.querySelectorAll('.account-checkbox:checked').length || 1" />
+                    <% if account.avatar_url.present? %>
+                      <%= image_tag account.avatar_url, class: "w-5 h-5 rounded-full", alt: "", referrer_policy: "no-referrer" %>
+                    <% end %>
+                    <span class="text-sm"><%= account.display_name %></span>
+                  </label>
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-action">
+            <button type="button" class="btn btn-ghost" data-action="modal#close">Cancel</button>
+            <%= f.submit "Post Replies", class: "btn btn-primary gap-1" %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+    <div class="modal-backdrop" data-action="click->modal#close"></div>
+  </dialog>
+<% end %>

@@ -28,6 +28,6 @@ module CommentAuthorHelper
   end
 
   def avatar_image_tag_attributes
-    { referrer_policy: "no-referrer", class: "w-[36px] h-[36px] rounded-full", alt: "" }
+    { referrer_policy: "no-referrer", class: "w-8 h-8 rounded-full", alt: "" }
   end
 end

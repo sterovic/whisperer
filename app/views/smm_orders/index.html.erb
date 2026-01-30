@@ -100,8 +100,8 @@
       </div>
 
       <% if @orders.respond_to?(:total_pages) && @orders.total_pages > 1 %>
-        <div class="px-6 py-4 border-t border-base-300">
-          <%= paginate @orders %>
+        <div class="mt-6 flex justify-center">
+          <%= paginate @orders, theme: 'default' %>
         </div>
       <% end %>
     <% end %>

@@ -40,7 +40,7 @@ class Comment < ApplicationRecord
   private
 
   def saved_change_to_tracked_attributes?
-    saved_change_to_status? || saved_change_to_like_count? || saved_change_to_rank?
+    saved_change_to_status? || saved_change_to_like_count? || saved_change_to_rank? || 1
   end
 
   def broadcast_update

@@ -20,6 +20,8 @@ class Project < ApplicationRecord
                  :include_existing_comments,
                  :mention_product,
                  :num_comments,
+                 # Reply settings
+                 :reply_prompt,
                  # Project settings
                  :comment_method,      # "youtube_api" or "smm_panel"
                  :smm_panel_type       # "jap" or other panel types
@@ -37,6 +39,7 @@ class Project < ApplicationRecord
     include_existing_comments: true,
     mention_product: true,
     num_comments: 10,
+    reply_prompt: "You are writing replies to YouTube comments. Write natural, engaging replies that continue the conversation. Match the tone and style of typical YouTube replies - casual, friendly, and conversational.",
     comment_method: "youtube_api",
     smm_panel_type: nil
   }.freeze
