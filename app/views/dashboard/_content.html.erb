@@ -49,17 +49,19 @@
     </div>
 
     <!-- Visible Comments -->
-    <div class="bg-base-100 rounded-box border border-base-300 p-4">
-      <div class="flex items-center gap-3">
-        <div class="bg-success/10 rounded-box p-3">
-          <span class="iconify lucide--eye size-6 text-success"></span>
-        </div>
-        <div>
-          <p class="text-2xl font-bold"><%= @current_project.comments.visible.count %></p>
-          <p class="text-sm text-base-content/60">Visible</p>
+    <%= link_to comments_path(status: :visible) do %>
+      <div class="bg-base-100 rounded-box border border-base-300 p-4">
+        <div class="flex items-center gap-3">
+          <div class="bg-success/10 rounded-box p-3">
+            <span class="iconify lucide--eye size-6 text-success"></span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold"><%= @current_project.comments.visible.count %></p>
+            <p class="text-sm text-base-content/60">Visible</p>
+          </div>
         </div>
       </div>
-    </div>
+    <% end %>
 
     <!-- Google Accounts -->
     <div class="bg-base-100 rounded-box border border-base-300 p-4">

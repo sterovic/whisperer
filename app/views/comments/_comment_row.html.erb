@@ -1,4 +1,4 @@
-<tbody id="comment_<%= comment.id %>" data-controller="collapsible" data-collapsible-expanded-value="false">
+<tbody id="comment_<%= comment.id %>" data-controller="collapsible" data-collapsible-expanded-value="false" class="hover:bg-base-200">
 <tr class="hover group">
   <td class="max-w-xs">
     <div>
@@ -47,14 +47,14 @@
       <span class="text-sm truncate"><%= author_display_name(comment) %></span>
     </div>
   </td>
-  <td class="whitespace-nowrap">
+  <td class="whitespace-nowrap text-center">
     <% post_type_class = case comment.post_type
                          when "via_api" then "badge-info"
                          when "via_smm" then "badge-secondary"
                          when "manual" then "badge-ghost"
                          else "badge-ghost"
                          end %>
-    <span class="badge badge-soft badge-outline badge-sm <%= post_type_class %> gap-1 whitespace-nowrap">
+    <span class="badge badge-soft badge-sm <%= post_type_class %> gap-1 whitespace-nowrap">
       <% case comment.post_type %>
       <% when "via_api" %>
         <span class="iconify lucide--cloud size-3"></span>
@@ -78,56 +78,63 @@
                      when "removed" then "badge-error"
                      else "badge-ghost"
                      end %>
-    <span class="badge badge-sm <%= badge_class %> whitespace-nowrap"><%= comment.status %></span>
+    <span class="badge badge-outline badge-sm <%= badge_class %> whitespace-nowrap"><%= comment.status %></span>
   </td>
   <td class="text-center whitespace-nowrap">
-    <span class="inline-flex items-center gap-1 text-sm">
-      <span class="iconify lucide--thumbs-up size-3.5 text-base-content/30"></span>
-      <span class="<%= comment.like_count.to_i > 0 ? 'font-medium' : 'text-base-content/40' %>">
+    <div class="flex items-center justify-center gap-1 text-sm">
+      <span class="iconify lucide--thumbs-up size-3.5 text-base-content"></span>
+      <span class="<%= comment.like_count.to_i > 0 ? 'font-sm' : 'text-base-content' %>">
         <%= comment.like_count || 0 %>
       </span>
-    </span>
+    </div>
   </td>
   <td class="text-center whitespace-nowrap">
     <% if comment.rank.present? %>
       <% rank_badge_class = if comment.rank <= 3
                               "badge-primary"
                             elsif comment.rank <= 10
-                              "badge-info badge-outline"
+                              "badge-info"
                             else
-                              "badge-ghost badge-outline"
+                              "badge-ghost"
                             end %>
       <span class="badge badge-sm <%= rank_badge_class %> whitespace-nowrap">#<%= comment.rank %></span>
     <% else %>
       <span class="text-base-content/40 text-sm">-</span>
     <% end %>
   </td>
-  <td class="whitespace-nowrap">
+  <td class="whitespace-nowrap relative">
     <span class="text-sm text-base-content/60" title="<%= comment.created_at.strftime('%b %d, %Y %H:%M') %>">
       <%= time_ago_in_words(comment.created_at) %> ago
     </span>
-  </td>
-  <td>
-    <div class="flex items-center gap-1 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 focus-within:opacity-100 focus-within:translate-x-0 transition-all duration-200 ease-out">
-      <% if comment.youtube_comment_id.present? %>
+    <% if comment.youtube_comment_id.present? %>
+      <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1
+                  px-2 py-1 rounded-lg bg-base-100 shadow-md border border-base-200
+                  opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0
+                  focus-within:opacity-100 focus-within:translate-x-0
+                  transition-all duration-200 ease-out">
         <%= link_to reply_form_comment_path(comment),
-                    class: "btn btn-ghost btn-xs",
-                    title: "Add replies",
-                    data: { turbo_frame: "modal" } do %>
+                    class: "btn btn-ghost btn-xs tooltip tooltip-left",
+                    data: { turbo_frame: "modal", tip: "Reply" } do %>
           <span class="iconify lucide--reply size-4"></span>
         <% end %>
-        <button class="btn btn-ghost btn-xs" popovertarget="upvote_pop_<%= comment.id %>" style="anchor-name:--upvote-<%= comment.id %>" title="Add likes via SMM">
+        <button class="btn btn-ghost btn-xs tooltip tooltip-left" data-tip="Upvote via SMM" popovertarget="upvote_pop_<%= comment.id %>" style="anchor-name:--upvote-<%= comment.id %>">
           <span class="iconify lucide--thumbs-up size-4"></span>
+        </button>
+        <button class="btn btn-ghost btn-xs tooltip tooltip-left" data-tip="Copy URL"
+                onclick="
+                navigator.clipboard.writeText('https://www.youtube.com/watch?v=<%= comment.video&.youtube_id %>&lc=<%= comment.youtube_comment_id %>');
+                  this.dataset.tip = 'Copied!';
+                  setTimeout(() => this.dataset.tip = 'Copy URL', 1500);
+                ">
+          <span class="iconify lucide--link size-4"></span>
         </button>
         <%= link_to "https://www.youtube.com/watch?v=#{comment.video&.youtube_id}&lc=#{comment.youtube_comment_id}",
                     target: "_blank",
-                    class: "btn btn-ghost btn-xs",
-                    title: "View on YouTube" do %>
+                    class: "btn btn-ghost btn-xs tooltip tooltip-left",
+                    data: { tip: "Open on YouTube" } do %>
           <span class="iconify lucide--external-link size-4"></span>
         <% end %>
-      <% end %>
-    </div>
-    <% if comment.youtube_comment_id.present? %>
+      </div>
       <div class="dropdown dropdown-end card card-compact w-52 p-2 shadow bg-base-100 border border-base-300"
            popover id="upvote_pop_<%= comment.id %>" style="position-anchor:--upvote-<%= comment.id %>">
         <%= form_with url: upvote_comment_path(comment), method: :post, class: "flex flex-col gap-2" do |f| %>
@@ -141,7 +148,7 @@
 </tr>
 <% if comment.replies.any? %>
   <tr data-collapsible-target="content" class="hidden" id="comment_<%= comment.id %>_replies">
-    <td colspan="9" class="!p-0 !bg-transparent">
+    <td colspan="8" class="!p-0 !bg-transparent">
       <div class="ml-6 my-2 border-l-2 border-primary/20">
         <div class="divide-y divide-base-200/60">
           <% comment.replies.ordered.each do |reply| %>
@@ -181,13 +188,21 @@
                   </span>
                   <div class="inline-flex items-center gap-1 opacity-0 translate-x-2 group-hover/reply:opacity-100 group-hover/reply:translate-x-0 focus-within:opacity-100 focus-within:translate-x-0 transition-all duration-200 ease-out">
                     <% if reply.youtube_comment_id.present? %>
-                      <button class="btn btn-ghost btn-xs btn-circle" popovertarget="upvote_pop_reply_<%= reply.id %>" style="anchor-name:--upvote-reply-<%= reply.id %>" title="Add likes via SMM">
+                      <button class="btn btn-ghost btn-xs btn-circle tooltip tooltip-left" data-tip="Upvote via SMM" popovertarget="upvote_pop_reply_<%= reply.id %>" style="anchor-name:--upvote-reply-<%= reply.id %>">
                         <span class="iconify lucide--thumbs-up size-3"></span>
+                      </button>
+                      <button class="btn btn-ghost btn-xs btn-circle tooltip tooltip-left" data-tip="Copy URL"
+                              onclick="
+                              navigator.clipboard.writeText('https://www.youtube.com/watch?v=<%= reply.video&.youtube_id %>&lc=<%= reply.youtube_comment_id %>');
+                                this.dataset.tip = 'Copied!';
+                                setTimeout(() => this.dataset.tip = 'Copy URL', 1500);
+                              ">
+                        <span class="iconify lucide--link size-3"></span>
                       </button>
                       <%= link_to "https://www.youtube.com/watch?v=#{reply.video&.youtube_id}&lc=#{reply.youtube_comment_id}",
                                   target: "_blank",
-                                  class: "btn btn-ghost btn-xs btn-circle",
-                                  title: "View on YouTube" do %>
+                                  class: "btn btn-ghost btn-xs btn-circle tooltip tooltip-left",
+                                  data: { tip: "Open on YouTube" } do %>
                         <span class="iconify lucide--external-link size-3"></span>
                       <% end %>
                     <% end %>
@@ -196,7 +211,7 @@
                     <div class="dropdown dropdown-end card card-compact w-52 p-2 shadow bg-base-100 border border-base-300"
                          popover id="upvote_pop_reply_<%= reply.id %>" style="position-anchor:--upvote-reply-<%= reply.id %>">
                       <%= form_with url: upvote_comment_path(reply), method: :post, class: "flex flex-col gap-2" do |f| %>
-                        <label class="text-xs font-medium">Add likes via SMM</label>
+                        <label for="" class="text-xs font-medium">Add likes via SMM</label>
                         <input type="number" name="quantity" value="10" min="1" class="input input-sm input-bordered w-full"/>
                         <button type="submit" class="btn btn-sm btn-primary">Order</button>
                       <% end %>
