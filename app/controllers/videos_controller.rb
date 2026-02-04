@@ -105,8 +105,6 @@ class VideosController < ApplicationController
           locals: {
             job_id: job.job_id,
             job_name: "YouTube Video Import",
-            step: 0,
-            total_steps: 1,
             message: "Starting import...",
             percentage: 0,
             status: :running

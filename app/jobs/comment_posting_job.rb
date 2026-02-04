@@ -215,8 +215,6 @@ class CommentPostingJob < ApplicationJob
       locals: {
         job_id: @job_id,
         job_name: "Comment Posting",
-        step: @current_step,
-        total_steps: @total_steps,
         message: message,
         percentage: progress_percentage,
         status: :running
@@ -232,8 +230,6 @@ class CommentPostingJob < ApplicationJob
       locals: {
         job_id: @job_id,
         job_name: "Comment Posting",
-        step: @total_steps,
-        total_steps: [@total_steps, 1].max,
         message: message,
         percentage: 100,
         status: success ? :completed : :failed
@@ -249,8 +245,6 @@ class CommentPostingJob < ApplicationJob
       locals: {
         job_id: @job_id,
         job_name: "Comment Posting",
-        step: @current_step,
-        total_steps: [@total_steps, 1].max,
         message: "Error: #{error_message}",
         percentage: 0,
         status: :failed

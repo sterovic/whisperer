@@ -1,36 +1,27 @@
-<div id="job_<%= job_id %>" class="card bg-base-200 shadow-xl">
-  <div class="card-body">
-    <h3 class="card-title">
-      <%= local_assigns[:job_name] || "Job Progress" %>
-      <% if status == :running %>
-        <span class="loading loading-spinner loading-sm"></span>
-      <% elsif status == :completed %>
-        <span class="badge badge-success">Completed</span>
-      <% elsif status == :failed %>
-        <span class="badge badge-error">Failed</span>
-      <% end %>
-    </h3>
-
-    <p class="text-sm"><%= message %></p>
-
-    <!-- Progress Bar -->
-    <div class="w-full">
-      <div class="flex justify-between text-sm mb-1">
-        <span>Step <%= step %> of <%= total_steps %></span>
-        <span><%= percentage %>%</span>
+<div id="job_<%= job_id %>" class="bg-base-100 rounded-lg border border-base-300 shadow-lg overflow-hidden animate-in fade-in slide-in-from-right">
+  <div class="px-3 py-2.5">
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <% if status == :running %>
+          <span class="loading loading-spinner loading-xs text-primary shrink-0"></span>
+        <% elsif status == :completed %>
+          <span class="iconify lucide--check-circle-2 size-4 text-success shrink-0"></span>
+        <% elsif status == :failed %>
+          <span class="iconify lucide--x-circle size-4 text-error shrink-0"></span>
+        <% end %>
+        <span class="text-sm font-medium truncate"><%= local_assigns[:job_name] || "Job" %></span>
       </div>
-      <progress
-        class="progress <%= status == :completed ? 'progress-success' : status == :failed ? 'progress-error' : 'progress-primary' %> w-full"
-        value="<%= percentage %>"
-        max="100">
-      </progress>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="card-actions justify-end mt-4">
       <% if status == :completed || status == :failed %>
-        <button class="btn btn-sm btn-ghost" onclick="this.closest('.card').remove()">Dismiss</button>
+        <button class="btn btn-ghost btn-xs btn-square opacity-50 hover:opacity-100 shrink-0" onclick="this.closest('[id^=job_]').remove()">
+          <span class="iconify lucide--x size-3.5"></span>
+        </button>
       <% end %>
+    </div>
+    <p class="text-xs text-base-content/60 truncate mt-1"><%= message %></p>
+  </div>
+  <div class="h-1 bg-base-200">
+    <div class="h-full transition-all duration-500 ease-out rounded-r-full <%= status == :completed ? 'bg-success' : status == :failed ? 'bg-error' : 'bg-primary' %>"
+         style="width: <%= percentage %>%">
     </div>
   </div>
 </div>

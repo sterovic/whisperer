@@ -23,12 +23,15 @@ module SmmAdapters
     end
 
     # Upvote a comment
-    def upvote_comment(comment_url:, quantity:, service_id:)
+    def upvote_comment(comment_url:, quantity:, service_id:, interval: 2, runs: 10, **args)
       response = make_request(
         action: "add",
         service: service_id,
         link: comment_url,
-        quantity: quantity
+        quantity: quantity,
+        interval: interval,
+        runs: runs,
+        **args
       )
 
       if response[:order]

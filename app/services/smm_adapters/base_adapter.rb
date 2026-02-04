@@ -1,8 +1,11 @@
 module SmmAdapters
   class BaseAdapter
     class ApiError < StandardError; end
+
     class AuthenticationError < ApiError; end
+
     class InvalidServiceError < ApiError; end
+
     class InsufficientFundsError < ApiError; end
 
     def initialize(api_key)
@@ -23,7 +26,7 @@ module SmmAdapters
     # @param quantity [Integer] Number of upvotes
     # @param service_id [String] The service ID to use
     # @return [Hash] { order_id: String, success: Boolean, error: String? }
-    def upvote_comment(comment_url:, quantity:, service_id:)
+    def upvote_comment(comment_url:, quantity:, service_id:, interval:, runs:)
       raise NotImplementedError, "#{self.class} must implement #upvote_comment"
     end
 

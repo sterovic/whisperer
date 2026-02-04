@@ -94,8 +94,6 @@ class ExampleSocialMediaJob < ApplicationJob
       partial: "jobs/progress",
       locals: {
         job_id: @job_id,
-        step: step,
-        total_steps: @total_steps,
         message: message,
         percentage: progress_percentage,
         status: :running
@@ -110,8 +108,6 @@ class ExampleSocialMediaJob < ApplicationJob
       partial: "jobs/progress",
       locals: {
         job_id: @job_id,
-        step: @total_steps,
-        total_steps: @total_steps,
         message: message,
         percentage: 100,
         status: success ? :completed : :failed
@@ -126,8 +122,6 @@ class ExampleSocialMediaJob < ApplicationJob
       partial: "jobs/progress",
       locals: {
         job_id: @job_id,
-        step: 0,
-        total_steps: @total_steps,
         message: "Error: #{error_message}",
         percentage: 0,
         status: :failed

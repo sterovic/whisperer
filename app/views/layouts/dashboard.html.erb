@@ -31,6 +31,13 @@
     </div>
   </div>
 </div>
+<!-- Fixed Job Progress Container (bottom-right corner) -->
+<% if user_signed_in? %>
+  <div id="job_progress_container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-80">
+  </div>
+  <%= turbo_stream_from "job_progress_#{current_user.id}" %>
+<% end %>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/simplebar/6.2.7/simplebar.min.js"></script>
 <link
   rel="stylesheet"

@@ -27,8 +27,6 @@ class JobsController < ApplicationController
           locals: {
             job_id: SecureRandom.uuid,
             job_name: "Comment Posting",
-            step: 0,
-            total_steps: 1,
             message: "Error: Please select a project first",
             percentage: 0,
             status: :failed
@@ -49,8 +47,6 @@ class JobsController < ApplicationController
       locals: {
         job_id: job.job_id,
         job_name: job_name,
-        step: 0,
-        total_steps: 1,
         message: "Job queued...",
         percentage: 0,
         status: :running

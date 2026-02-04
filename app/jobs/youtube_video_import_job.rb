@@ -28,6 +28,7 @@ class YouTubeVideoImportJob < ApplicationJob
         broadcast_progress("Fetching video #{index + 1}/#{urls.size}: #{youtube_id}")
 
         video = fetch_and_store_video(youtube_id, url)
+        broadcast_progress("Video already exists, data will be updated") unless video.previously_new_record?
 
         if video && @import_existing_comments
           broadcast_progress("Scanning comments for #{@project.name}...")
@@ -166,8 +167,6 @@ class YouTubeVideoImportJob < ApplicationJob
       locals: {
         job_id: @job_id,
         job_name: "YouTube Video Import",
-        step: @current_step,
-        total_steps: @total_steps,
         message: message,
         percentage: progress_percentage,
         status: :running
@@ -183,8 +182,6 @@ class YouTubeVideoImportJob < ApplicationJob
       locals: {
         job_id: @job_id,
         job_name: "YouTube Video Import",
-        step: @total_steps,
-        total_steps: @total_steps,
         message: message,
         percentage: 100,
         status: success ? :completed : :failed
@@ -200,8 +197,6 @@ class YouTubeVideoImportJob < ApplicationJob
       locals: {
         job_id: @job_id,
         job_name: "YouTube Video Import",
-        step: @current_step,
-        total_steps: @total_steps,
         message: "Error: #{error_message}",
         percentage: 0,
         status: :failed

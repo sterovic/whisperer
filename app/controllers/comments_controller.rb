@@ -87,7 +87,11 @@ class CommentsController < ApplicationController
     end
 
     comment_url = "https://www.youtube.com/watch?v=#{@comment.video.youtube_id}&lc=#{@comment.youtube_comment_id}"
-    result = credential.adapter.upvote_comment(comment_url: comment_url, quantity: quantity, service_id: credential.upvote_service_id)
+    result = credential.adapter.upvote_comment(
+      comment_url: comment_url,
+      quantity: quantity,
+      service_id: credential.upvote_service_id
+    )
 
     if result[:success]
       SmmOrder.create!(

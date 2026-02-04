@@ -153,12 +153,5 @@
       </div>
     </div>
 
-    <!-- Live Job Progress Container -->
-    <div id="job_progress_container" class="space-y-4">
-      <!-- Progress cards will be inserted here via Turbo Streams -->
-    </div>
   </div>
 </div>
-
-<!-- Subscribe to job progress updates -->
-<%= turbo_stream_from "job_progress_#{current_user.id}" %>
