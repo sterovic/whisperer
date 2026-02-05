@@ -29,7 +29,7 @@ gem "bcrypt", "~> 3.1.7"
 gem "devise", "~> 4.9"
 
 # PostgreSQL-backed ActiveJob adapter [https://github.com/bensheldon/good_job]
-gem "good_job", "~> 4.5"
+gem "good_job", "~> 4.13"
 
 # YouTube API client [https://github.com/nullscreen/yt]
 gem "yt", "~> 0.34"
