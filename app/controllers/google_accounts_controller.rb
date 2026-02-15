@@ -28,13 +28,17 @@ class GoogleAccountsController < ApplicationController
     account = response.parse.with_indifferent_access # Auto-parse JSON
 
     google_account = current_user.google_accounts.find_or_initialize_by(google_id: account[:id])
+
+    is_new = google_account.new_record?
     google_account.assign_attributes(
       email: account[:email],
       name: account[:name],
       avatar_url: account[:picture],
       access_token: auth.access_token,
       refresh_token: auth.refresh_token,
-      token_status: :active
+      token_status: :active,
+      token_expires_at: auth.expires_at,
+      **timestamp_attrs(is_new)
     )
     google_account.save!
 
@@ -52,9 +56,10 @@ class GoogleAccountsController < ApplicationController
   def disconnect
     @google_account = current_user.google_accounts.find(params[:id])
 
-    # Revoke token on Google side
-    if @google_account.access_token.present?
-      response = HTTP.post("https://accounts.google.com/o/oauth2/revoke?token=#{@google_account.access_token}")
+    # Prefer refresh_token for revocation (access_token likely expired)
+    revoke_token = @google_account.refresh_token.presence || @google_account.access_token.presence
+    if revoke_token
+      response = HTTP.post("https://accounts.google.com/o/oauth2/revoke?token=#{revoke_token}")
       Rails.logger.info "Google revoke response: #{response.code}"
     end
 
@@ -64,15 +69,15 @@ class GoogleAccountsController < ApplicationController
     redirect_to google_accounts_path, alert: "Account not found."
   end
 
-  def revoke_access
-    @google_account = current_user.google_accounts.find(params[:id])
-    yt_account = Yt::Account.new(refresh_token: @google_account.refresh_token)
-    yt_account.revoke_access!
-    @google_account.update!(access_token: nil, refresh_token: nil)
-    redirect_to google_accounts_path, notice: "Access revoked."
-  end
-
   private
+
+  def timestamp_attrs(is_new)
+    if is_new
+      { authorized_at: Time.current }
+    else
+      { reauthorized_at: Time.current }
+    end
+  end
 
   def fetch_channel_id(account)
     account&.channel&.id

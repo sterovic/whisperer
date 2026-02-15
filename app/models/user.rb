@@ -20,7 +20,8 @@ class User < ApplicationRecord
   validate :password_complexity
 
   store_accessor :preferences,
-                 :current_project_id
+                 :current_project_id,
+                 :videos_last_viewed_at
 
   def full_name
     "#{first_name} #{last_name}"

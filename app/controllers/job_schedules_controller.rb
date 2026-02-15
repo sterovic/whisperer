@@ -14,24 +14,19 @@ class JobSchedulesController < ApplicationController
       @job_schedule.stop!
       redirect_to jobs_path, notice: "#{@job_schedule.job_name} stopped"
     else
-      @job_schedule.start!
+      @job_schedule.start!(current_user)
       redirect_to jobs_path, notice: "#{@job_schedule.job_name} started"
     end
   end
 
   def run_now
-    job_class = @job_schedule.job_class.constantize
-
-    case @job_schedule.job_class
-    when "CommentPostingJob"
-      unless @current_project
-        redirect_to jobs_path, alert: "Please select a project first"
-        return
-      end
-      job_class.perform_later(current_user.id, @current_project.id)
-    else
-      job_class.perform_later
+    unless current_project
+      redirect_to jobs_path, alert: "Please select a project first"
+      return
     end
+
+    job_class = @job_schedule.job_class.constantize
+    job_class.perform_later(current_user.id, current_project.id, { skip_reschedule: true })
 
     redirect_to jobs_path, notice: "#{@job_schedule.job_name} triggered"
   end

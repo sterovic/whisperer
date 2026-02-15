@@ -35,6 +35,7 @@ class GoogleAccount < ApplicationRecord
 
   def yt_account
     raise TokenNotUsableError, "Token is not usable for account #{email}" unless token_usable?
+    touch(:last_used_at)
     Yt::Account.new(refresh_token: refresh_token)
   end
 

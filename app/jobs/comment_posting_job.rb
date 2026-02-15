@@ -1,58 +1,38 @@
-class CommentPostingJob < ApplicationJob
+class CommentPostingJob < ScheduledJob
+  include GoodJob::ActiveJobExtensions::Concurrency
+
   queue_as :default
 
-  after_perform do |job|
-    # Don't reschedule if this was a manual trigger with specific videos
-    options = job.arguments.last.is_a?(Hash) ? job.arguments.last : {}
-    next if options[:skip_reschedule]
+  good_job_control_concurrency_with(
+    perform_limit: 1,
+    key: -> { "#{self.class.name}-#{arguments.second}" }
+  )
 
-    # Reschedule with same user/project if enabled
-    schedule = JobSchedule.for(job.class.name)
-    if schedule.enabled?
-      # Only pass user_id and project_id for scheduled jobs (no video_ids)
-      job.class.set(wait: schedule.interval_minutes.minutes).perform_later(
-        job.arguments[0],
-        job.arguments[1]
-      )
-    end
-  end
+  self.job_display_name = "Comment Posting"
 
-  def perform(user_id, project_id, options = {})
-    options = options.symbolize_keys
+  private
+
+  def execute(options)
     @skip_reschedule = options[:skip_reschedule]
     @video_ids = options[:video_ids]
-
-    # Only check schedule for automated runs (not manual triggers)
-    unless @skip_reschedule
-      schedule = JobSchedule.for(self.class.name)
-
-      # Skip if another instance already ran recently (prevents duplicates when interval changes)
-      if schedule.recently_ran?
-        Rails.logger.info "CommentPostingJob: Skipping - another instance ran recently"
-        return
-      end
-
-      schedule.touch(:last_run_at)
-    end
-
-    @user = User.find(user_id)
-    @project = Project.find(project_id)
-    @job_id = provider_job_id || job_id
 
     # Check comment posting method
     if @project.use_smm_panel?
       @smm_credential = @user.smm_panel_credentials.find_by(panel_type: @project.prompt_setting(:smm_panel_type))
       if @smm_credential.nil?
+        Rails.logger.warn "CommentPostingJob: SMM Panel not configured for project #{@project.id}"
         broadcast_error("SMM Panel not configured. Please configure your SMM panel in settings.")
         return
       end
       if @smm_credential.comment_service_id.blank?
+        Rails.logger.warn "CommentPostingJob: Comment service ID not set for project #{@project.id}"
         broadcast_error("Comment service ID not set for SMM panel. Please configure it in SMM Panels settings.")
         return
       end
     else
       @usable_accounts = @user.google_accounts.usable.to_a
       if @usable_accounts.empty?
+        Rails.logger.warn "CommentPostingJob: No usable Google accounts for user #{@user.id} (total accounts: #{@user.google_accounts.count}, statuses: #{@user.google_accounts.pluck(:token_status).tally})"
         broadcast_error("No usable Google accounts. Please connect or reconnect an account.")
         return
       end
@@ -87,15 +67,13 @@ class CommentPostingJob < ApplicationJob
     end
   end
 
-  private
-
   def find_videos_to_process
     if @video_ids.present?
       # Manual trigger with specific videos - process these regardless of existing comments
       @project.videos.where(id: @video_ids)
     else
       # Automated run - only process uncommented videos
-      commented_video_ids = @project.comments.pluck(:video_id).uniq
+      commented_video_ids = @project.comments.select(:video_id).distinct
       @project.videos.where.not(id: commented_video_ids)
     end
   end

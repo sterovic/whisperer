@@ -16,7 +16,8 @@ class CommentsController < ApplicationController
 
     @comments = scope.page(params[:page]).per(20)
     @videos = current_project.videos.order(:title)
-    @status_check_schedule = JobSchedule.find_by(job_class: "CommentStatusCheckJob")
+    @channels = current_project.channels.order(:name)
+    @status_check_schedule = JobSchedule.find_by(job_class: "CommentStatusCheckJob", project_id: current_project&.id)
   end
 
   def reply_form
@@ -125,7 +126,8 @@ class CommentsController < ApplicationController
 
   def any_filters_active?
     params[:status].present? || params[:source].present? || params[:video_id].present? ||
-      params[:q].present? || params[:replies].present? || (params[:sort].present? && params[:sort] != "newest")
+      params[:channel_id].present? || params[:q].present? || params[:replies].present? ||
+      (params[:sort].present? && params[:sort] != "newest")
   end
 
   helper_method :current_project, :any_filters_active?
@@ -134,6 +136,7 @@ class CommentsController < ApplicationController
     scope = scope.where(status: params[:status]) if params[:status].present? && Comment.statuses.key?(params[:status])
     scope = scope.where(post_type: params[:source]) if params[:source].present? && Comment.post_types.key?(params[:source])
     scope = scope.where(video_id: params[:video_id]) if params[:video_id].present?
+    scope = scope.joins(video: :channel).where(channels: { id: params[:channel_id] }) if params[:channel_id].present?
 
     if params[:q].present?
       scope = scope.where("comments.text ILIKE ?", "%#{Comment.sanitize_sql_like(params[:q])}%")

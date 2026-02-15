@@ -1,0 +1,296 @@
+<% content_for :title, "Search Videos - Whisperer" %>
+
+<div>
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="block iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <%= link_to "Videos", videos_path, class: "hover:text-base-content transition-colors" %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Search</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Search Videos</h1>
+        <p class="text-base-content/60 text-sm mt-1">Find and import YouTube videos by query or discover related content</p>
+      </div>
+      <%= link_to videos_path, class: "btn btn-ghost gap-2" do %>
+        <span class="iconify lucide--arrow-left size-4"></span>
+        Back to Videos
+      <% end %>
+    </div>
+  </div>
+
+  <% if current_project.nil? %>
+    <div class="alert alert-warning mb-6">
+      <span class="iconify lucide--alert-triangle size-5"></span>
+      <span>Please select a project before searching for videos.</span>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Left Column: Search Forms -->
+    <div class="xl:col-span-2 space-y-6">
+
+      <!-- Section 1: Search by Query -->
+      <%= form_with url: video_searches_path, method: :post, data: { turbo_stream: true } do |f| %>
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+            <span class="iconify lucide--search size-5 text-base-content/70"></span>
+            Search by Query
+          </h2>
+          <p class="text-sm text-base-content/60 mb-5">
+            Search YouTube for videos matching your keywords using the YouTube Data API.
+          </p>
+
+          <div class="space-y-4">
+            <div class="space-y-2" data-controller="search-autocomplete">
+              <label for="query" class="fieldset-label">Search Query</label>
+              <div class="relative">
+                <input type="text"
+                       name="query"
+                       id="query"
+                       class="input input-bordered w-full"
+                       placeholder="e.g. best project management tools 2025"
+                       autocomplete="off"
+                       data-search-autocomplete-target="input"
+                       data-action="input->search-autocomplete#onInput keydown->search-autocomplete#onKeydown"
+                       <%= "disabled" if current_project.nil? %> />
+                <div class="absolute z-50 top-full left-0 right-0 mt-1 bg-base-100 border border-base-300 rounded-box shadow-lg hidden overflow-hidden"
+                     data-search-autocomplete-target="suggestions">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shared Filters -->
+        <div class="bg-base-100 rounded-box border border-base-300 p-6 mt-4">
+          <h3 class="text-base font-semibold mb-4 flex items-center gap-2">
+            <span class="iconify lucide--sliders-horizontal size-4 text-base-content/70"></span>
+            Search Filters
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="space-y-1">
+              <label for="max_results" class="fieldset-label text-xs">Max Results</label>
+              <input type="number" name="max_results" id="max_results" value="10" min="1" max="50"
+                     class="input input-bordered input-sm w-full" <%= "disabled" if current_project.nil? %> />
+            </div>
+
+            <div class="space-y-1">
+              <label for="published_after" class="fieldset-label text-xs">Upload Date</label>
+              <select name="published_after" id="published_after" class="select select-bordered select-sm w-full" <%= "disabled" if current_project.nil? %>>
+                <option value="">Any time</option>
+                <option value="last_hour">Last hour</option>
+                <option value="today">Today</option>
+                <option value="this_week">This week</option>
+                <option value="this_month">This month</option>
+                <option value="this_year">This year</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label for="order" class="fieldset-label text-xs">Sort By</label>
+              <select name="order" id="order" class="select select-bordered select-sm w-full" <%= "disabled" if current_project.nil? %>>
+                <option value="relevance">Relevance</option>
+                <option value="date">Upload date</option>
+                <option value="viewCount">View count</option>
+                <option value="rating">Rating</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label for="video_duration" class="fieldset-label text-xs">Duration</label>
+              <select name="video_duration" id="video_duration" class="select select-bordered select-sm w-full" <%= "disabled" if current_project.nil? %>>
+                <option value="">Any</option>
+                <option value="short">Short (&lt; 4 min)</option>
+                <option value="medium">Medium (4-20 min)</option>
+                <option value="long">Long (&gt; 20 min)</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label for="video_definition" class="fieldset-label text-xs">Definition</label>
+              <select name="video_definition" id="video_definition" class="select select-bordered select-sm w-full" <%= "disabled" if current_project.nil? %>>
+                <option value="">Any</option>
+                <option value="high">HD</option>
+                <option value="standard">SD</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label for="region_code" class="fieldset-label text-xs">Region Code</label>
+              <input type="text" name="region_code" id="region_code" placeholder="e.g. US"
+                     class="input input-bordered input-sm w-full" maxlength="2"
+                     <%= "disabled" if current_project.nil? %> />
+            </div>
+
+            <div class="space-y-1">
+              <label for="min_views" class="fieldset-label text-xs">Min View Count</label>
+              <input type="number" name="min_views" id="min_views" placeholder="0" min="0"
+                     class="input input-bordered input-sm w-full" <%= "disabled" if current_project.nil? %> />
+            </div>
+
+            <div class="space-y-1">
+              <label for="min_comments" class="fieldset-label text-xs">Min Comment Count</label>
+              <input type="number" name="min_comments" id="min_comments" placeholder="0" min="0"
+                     class="input input-bordered input-sm w-full" <%= "disabled" if current_project.nil? %> />
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit for Query Search -->
+        <div class="flex justify-end mt-4">
+          <%= f.submit "Search Videos",
+                       class: "btn btn-primary gap-2",
+                       disabled: current_project.nil?,
+                       data: { turbo_submits_with: "Searching..." } %>
+        </div>
+      <% end %>
+
+      <div class="divider">OR</div>
+
+      <!-- Section 2: Related Videos -->
+      <%= form_with url: search_related_video_searches_path, method: :post, data: { turbo_stream: true } do |f| %>
+        <div class="bg-base-100 rounded-box border border-base-300 p-6">
+          <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+            <span class="iconify lucide--git-branch size-5 text-base-content/70"></span>
+            Find Related Videos
+          </h2>
+          <p class="text-sm text-base-content/60 mb-5">
+            Select videos from your project to discover related content via SerpApi.
+          </p>
+
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <label class="fieldset-label">Source Videos</label>
+              <% if @videos.present? %>
+                <div class="max-h-64 overflow-y-auto border border-base-300 rounded-box">
+                  <% @videos.each do |video| %>
+                    <label class="flex items-center gap-3 px-3 py-2 hover:bg-base-200/50 cursor-pointer border-b border-base-200 last:border-0">
+                      <input type="checkbox" name="video_ids[]" value="<%= video.id %>"
+                             class="checkbox checkbox-sm checkbox-primary"
+                             <%= "disabled" if current_project.nil? %> />
+                      <% if video.thumbnail_url.present? %>
+                        <%= image_tag video.thumbnail_url, alt: video.title, class: "w-12 h-7 object-cover rounded shrink-0" %>
+                      <% else %>
+                        <div class="w-12 h-7 bg-base-200 rounded flex items-center justify-center shrink-0">
+                          <span class="iconify lucide--video size-3 text-base-content/30"></span>
+                        </div>
+                      <% end %>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-sm font-medium truncate"><%= video.title || "Untitled" %></p>
+                        <div class="flex items-center gap-3 text-xs text-base-content/50">
+                          <span><%= video.raw_data&.dig("channel_title") || "Unknown channel" %></span>
+                          <span><%= number_to_human(video.view_count || 0, precision: 1, significant: false) %> views</span>
+                          <span><%= video.comment_count || 0 %> comments</span>
+                        </div>
+                      </div>
+                    </label>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="text-sm text-base-content/50 bg-base-200/50 rounded-box p-4 text-center">
+                  No videos in this project yet. Import some videos first.
+                </div>
+              <% end %>
+            </div>
+
+            <!-- Related search filters -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div class="space-y-1">
+                <label for="related_max_results" class="fieldset-label text-xs">Max Results</label>
+                <input type="number" name="max_results" id="related_max_results" value="10" min="1" max="50"
+                       class="input input-bordered input-sm w-full" <%= "disabled" if current_project.nil? %> />
+              </div>
+
+              <div class="space-y-1">
+                <label for="related_min_views" class="fieldset-label text-xs">Min View Count</label>
+                <input type="number" name="min_views" id="related_min_views" placeholder="0" min="0"
+                       class="input input-bordered input-sm w-full" <%= "disabled" if current_project.nil? %> />
+              </div>
+
+              <div class="space-y-1">
+                <label for="related_min_comments" class="fieldset-label text-xs">Min Comment Count</label>
+                <input type="number" name="min_comments" id="related_min_comments" placeholder="0" min="0"
+                       class="input input-bordered input-sm w-full" <%= "disabled" if current_project.nil? %> />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit for Related Search -->
+        <div class="flex justify-end mt-4">
+          <%= f.submit "Find Related Videos",
+                       class: "btn btn-accent gap-2",
+                       disabled: current_project.nil?,
+                       data: { turbo_submits_with: "Searching..." } %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Right Column: Guide -->
+    <div class="xl:col-span-1">
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3">
+          <span class="iconify lucide--info size-5 text-info mt-0.5"></span>
+          <div class="text-sm">
+            <p class="font-medium mb-2">How It Works</p>
+            <div class="text-base-content/70 space-y-3">
+              <div>
+                <p class="font-medium text-base-content/90 mb-1">Search by Query</p>
+                <ol class="list-decimal list-inside space-y-0.5">
+                  <li>Enter keywords in the search box</li>
+                  <li>Adjust filters (date, duration, etc.)</li>
+                  <li>Click "Search Videos" to start</li>
+                  <li>Matching videos are imported to your project</li>
+                </ol>
+              </div>
+              <div>
+                <p class="font-medium text-base-content/90 mb-1">Find Related Videos</p>
+                <ol class="list-decimal list-inside space-y-0.5">
+                  <li>Select one or more source videos from your project</li>
+                  <li>Click "Find Related Videos"</li>
+                  <li>YouTube's related videos are fetched and imported</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="text-sm text-base-content/60">
+          <p class="font-medium mb-2">Filter Descriptions</p>
+          <ul class="space-y-1.5">
+            <li><strong class="text-base-content/80">Max Results</strong> &mdash; Maximum number of videos to import</li>
+            <li><strong class="text-base-content/80">Upload Date</strong> &mdash; Only include videos uploaded within this time range</li>
+            <li><strong class="text-base-content/80">Sort By</strong> &mdash; How results are ordered (relevance, date, views, rating)</li>
+            <li><strong class="text-base-content/80">Duration</strong> &mdash; Filter by video length</li>
+            <li><strong class="text-base-content/80">Definition</strong> &mdash; HD or SD videos</li>
+            <li><strong class="text-base-content/80">Region Code</strong> &mdash; Two-letter country code (e.g. US, GB)</li>
+            <li><strong class="text-base-content/80">Min Views/Comments</strong> &mdash; Skip videos below these thresholds</li>
+          </ul>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="text-sm">
+          <div class="flex items-start gap-2">
+            <span class="iconify lucide--zap size-4 text-warning mt-0.5 shrink-0"></span>
+            <div>
+              <p class="font-medium mb-1">About Related Video Search</p>
+              <p class="text-base-content/60">
+                Related video discovery uses SerpApi to fetch YouTube's "related videos" for each selected source video.
+                Full metadata is then fetched via the YouTube Data API before importing.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

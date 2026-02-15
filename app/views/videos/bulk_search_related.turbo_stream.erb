@@ -1,0 +1,12 @@
+<%= turbo_stream.prepend "flash_messages" do %>
+  <%= render "shared/flash_notice", message: "Related video search started for #{@video_ids.size} video(s)" %>
+<% end %>
+
+<%= turbo_stream.append "job_progress_container" do %>
+  <%= render "jobs/progress",
+             job_id: @job_id,
+             job_name: "Related Video Search",
+             message: "Starting related video search...",
+             percentage: 0,
+             status: :running %>
+<% end %>

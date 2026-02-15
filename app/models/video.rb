@@ -1,5 +1,6 @@
 class Video < ApplicationRecord
   belongs_to :project
+  belongs_to :channel, optional: true
   has_many :comments, dependent: :destroy
   has_many :smm_orders, dependent: :nullify
 

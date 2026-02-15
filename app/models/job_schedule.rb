@@ -1,13 +1,16 @@
 class JobSchedule < ApplicationRecord
-  validates :job_class, presence: true, uniqueness: true
+  belongs_to :project, optional: true
+  belongs_to :user, optional: true
+
+  validates :job_class, presence: true, uniqueness: { scope: :project_id }
   validates :interval_minutes, presence: true, numericality: { greater_than: 0, less_than_or_equal_to: 1440 }
 
   scope :enabled, -> { where(enabled: true) }
 
   after_update :manage_job_execution, if: :should_manage_job?
 
-  def self.for(job_class_name)
-    find_or_create_by(job_class: job_class_name.to_s)
+  def self.for(job_class_name, project)
+    find_or_create_by(job_class: job_class_name.to_s, project_id: project&.id)
   end
 
   def due?
@@ -24,12 +27,25 @@ class JobSchedule < ApplicationRecord
     last_run_at > (interval_minutes / 2.0).minutes.ago
   end
 
-  def start!
+  def start!(user = nil)
+    self.user = user if user
+    discard_pending_jobs!
+    self.last_run_at = nil
     update!(enabled: true)
   end
 
   def stop!
     update!(enabled: false)
+    discard_pending_jobs!
+  end
+
+  def discard_pending_jobs!
+    return if project_id.nil?
+
+    GoodJob::Job
+      .where(job_class: job_class, finished_at: nil, performed_at: nil)
+      .where("(serialized_params->'arguments'->>1)::bigint = ?", project_id)
+      .destroy_all
   end
 
   def job_name
@@ -57,10 +73,9 @@ class JobSchedule < ApplicationRecord
   end
 
   def manage_job_execution
-    if enabled?
-      # Start the job chain (or restart with new interval)
-      job_class.constantize.perform_later
+    if enabled? && user_id.present? && project_id.present?
+      discard_pending_jobs!
+      job_class.constantize.perform_later(user_id, project_id)
     end
-    # When disabled, the job will check the enabled status and stop re-enqueuing
   end
 end

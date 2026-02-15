@@ -11,6 +11,7 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   before_action :set_current_project
+  before_action :set_new_channel_videos_count
 
   protected
 
@@ -45,5 +46,15 @@ class ApplicationController < ActionController::Base
     if @current_project && current_user.current_project_id.nil?
       current_user.update(current_project_id: @current_project.id)
     end
+  end
+
+  def set_new_channel_videos_count
+    return unless current_user && @current_project
+
+    last_viewed = current_user.videos_last_viewed_at
+    scope = @current_project.videos.where("raw_data->>'source' = ?", "channel_poll")
+    scope = scope.where("videos.created_at > ?", Time.parse(last_viewed)) if last_viewed.present?
+
+    @new_channel_videos_count = scope.count
   end
 end

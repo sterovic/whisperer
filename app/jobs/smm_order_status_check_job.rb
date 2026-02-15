@@ -1,27 +1,22 @@
-class SmmOrderStatusCheckJob < ApplicationJob
+class SmmOrderStatusCheckJob < ScheduledJob
+  include GoodJob::ActiveJobExtensions::Concurrency
+
   queue_as :default
 
-  after_perform do |job|
-    # Reschedule job if enabled
-    schedule = JobSchedule.for(job.class.name)
-    job.class.set(wait: schedule.interval_minutes.minutes).perform_later if schedule.enabled?
-  end
+  good_job_control_concurrency_with(
+    perform_limit: 1,
+    key: -> { "#{self.class.name}-#{arguments.second}" }
+  )
 
-  def perform
-    schedule = JobSchedule.for(self.class.name)
+  self.job_display_name = "SMM Order Status Check"
 
-    # Skip if another instance already ran recently (prevents duplicates when interval changes)
-    if schedule.recently_ran?
-      Rails.logger.info "SmmOrderStatusCheckJob: Skipping - another instance ran recently"
-      return
-    end
+  private
 
-    schedule.touch(:last_run_at)
-
-    uncompleted_orders = SmmOrder.uncompleted.includes(:smm_panel_credential)
+  def execute(options)
+    uncompleted_orders = @project.smm_orders.uncompleted.includes(:smm_panel_credential)
     return if uncompleted_orders.empty?
 
-    Rails.logger.info "SmmOrderStatusCheckJob: Checking #{uncompleted_orders.count} uncompleted orders"
+    Rails.logger.info "SmmOrderStatusCheckJob: Checking #{uncompleted_orders.count} uncompleted orders for project #{@project.id}"
 
     # Group orders by credential for efficient batch API calls
     orders_by_credential = uncompleted_orders.group_by(&:smm_panel_credential)
@@ -32,8 +27,6 @@ class SmmOrderStatusCheckJob < ApplicationJob
       Rails.logger.error "Error checking orders for credential #{credential.id}: #{e.message}"
     end
   end
-
-  private
 
   def check_orders_for_credential(credential, orders)
     adapter = credential.adapter

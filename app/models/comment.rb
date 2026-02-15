@@ -2,7 +2,7 @@ class Comment < ApplicationRecord
   belongs_to :video
   belongs_to :google_account, optional: true
   belongs_to :project
-  belongs_to :parent, class_name: "Comment", optional: true
+  belongs_to :parent, class_name: "Comment", optional: true, touch: true
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
   has_many :smm_orders, dependent: :nullify
 
@@ -16,6 +16,7 @@ class Comment < ApplicationRecord
 
   after_update_commit :broadcast_update, if: :saved_change_to_tracked_attributes?
   after_create_commit :broadcast_create
+  after_touch -> { reload; broadcast_update }
 
   def self.import!(comment_data, video, post_type:)
     insert_all!(comment_data.map { |data| {
@@ -40,7 +41,7 @@ class Comment < ApplicationRecord
   private
 
   def saved_change_to_tracked_attributes?
-    saved_change_to_status? || saved_change_to_like_count? || saved_change_to_rank? || 1
+    saved_change_to_status? || saved_change_to_like_count? || saved_change_to_rank?
   end
 
   def broadcast_update

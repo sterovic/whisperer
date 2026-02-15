@@ -63,10 +63,63 @@
           <span class="iconify lucide--briefcase size-4"></span>
           <span class="grow">Jobs</span>
         <% end %>
-        <%= link_to videos_path, class: "menu-item #{controller_name == 'videos' ? 'active' : ''}" do %>
-          <span class="iconify lucide--video size-4"></span>
-          <span class="grow">Videos</span>
-        <% end %>
+        <% videos_active = controller_name == 'videos' || controller_name == 'video_searches' %>
+        <div class="group collapse <%= 'collapse-open' if videos_active %>">
+          <input
+            aria-label="Sidemenu item trigger"
+            type="checkbox"
+            class="peer"
+            name="sidebar-menu-videos"
+            <%= 'checked' if videos_active %> />
+          <div class="collapse-title px-2.5 py-1.5">
+            <span class="iconify lucide--video size-4"></span>
+            <span class="grow">Videos</span>
+            <% if @new_channel_videos_count && @new_channel_videos_count > 0 %>
+              <span class="badge badge-primary badge-xs text-[10px] font-bold px-1.5 py-0.5"><%= @new_channel_videos_count > 99 ? "99+" : @new_channel_videos_count %></span>
+            <% end %>
+            <span class="iconify lucide--chevron-right arrow-icon size-3.5"></span>
+          </div>
+          <div class="collapse-content ms-6.5 !p-0">
+            <div class="mt-0.5 space-y-0.5">
+              <%= link_to videos_path, class: "menu-item #{controller_name == 'videos' && action_name == 'index' ? 'active' : ''}" do %>
+                <span class="grow">Videos</span>
+              <% end %>
+              <%= link_to import_videos_path, class: "menu-item #{controller_name == 'videos' && action_name == 'import' ? 'active' : ''}" do %>
+                <span class="grow">Import</span>
+              <% end %>
+              <%= link_to video_searches_path, class: "menu-item #{controller_name == 'video_searches' ? 'active' : ''}" do %>
+                <span class="grow">Search</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+        <% channels_active = controller_name == 'channels' || controller_path.start_with?('channels') %>
+        <div class="group collapse <%= 'collapse-open' if channels_active %>">
+          <input
+            aria-label="Sidemenu item trigger"
+            type="checkbox"
+            class="peer"
+            name="sidebar-menu-channels"
+            <%= 'checked' if channels_active %> />
+          <div class="collapse-title px-2.5 py-1.5">
+            <span class="iconify lucide--radio size-4"></span>
+            <span class="grow">Channels</span>
+            <span class="iconify lucide--chevron-right arrow-icon size-3.5"></span>
+          </div>
+          <div class="collapse-content ms-6.5 !p-0">
+            <div class="mt-0.5 space-y-0.5">
+              <%= link_to channels_path, class: "menu-item #{controller_name == 'channels' && action_name == 'index' ? 'active' : ''}" do %>
+                <span class="grow">All Channels</span>
+              <% end %>
+              <%= link_to channels_subscriptions_path, class: "menu-item #{controller_path == 'channels/subscriptions' && action_name != 'new' ? 'active' : ''}" do %>
+                <span class="grow">Subscriptions</span>
+              <% end %>
+              <%= link_to new_channels_subscription_path, class: "menu-item #{controller_path == 'channels/subscriptions' && action_name == 'new' ? 'active' : ''}" do %>
+                <span class="grow">Subscribe</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
         <%= link_to google_accounts_path, class: "menu-item #{controller_name == 'google_accounts' ? 'active' : ''}" do %>
           <span class="iconify lucide--user-circle size-4"></span>
           <span class="grow">Google Accounts</span>

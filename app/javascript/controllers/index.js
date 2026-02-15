@@ -36,3 +36,6 @@ application.register("video-selection", VideoSelectionController);
 
 import ModalController from "./modal_controller";
 application.register("modal", ModalController);
+
+import SearchAutocompleteController from "./search_autocomplete_controller";
+application.register("search-autocomplete", SearchAutocompleteController);

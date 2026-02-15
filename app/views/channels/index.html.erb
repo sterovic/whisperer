@@ -1,0 +1,232 @@
+<% content_for :title, "Channels - Whisperer" %>
+
+<div>
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="block iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Channels</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Channels</h1>
+        <p class="text-base-content/60 text-sm mt-1">
+          <%= pluralize(@channels.total_count, "channel") %> in <%= current_project.name %>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <% if current_project.nil? %>
+    <div class="alert alert-warning">
+      <span class="iconify lucide--alert-triangle size-5"></span>
+      <span>Please select a project to view channels.</span>
+    </div>
+  <% else %>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-base-100 rounded-box border border-base-300 p-4">
+        <div class="flex items-center gap-3">
+          <div class="bg-primary/10 rounded-box p-3">
+            <span class="iconify lucide--radio size-6 text-primary"></span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold"><%= @channel_stats.total_channels %></p>
+            <p class="text-sm text-base-content/60">Total Channels</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-base-100 rounded-box border border-base-300 p-4">
+        <div class="flex items-center gap-3">
+          <div class="bg-secondary/10 rounded-box p-3">
+            <span class="iconify lucide--message-circle size-6 text-secondary"></span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold"><%= @channel_stats.total_comments.to_i %></p>
+            <p class="text-sm text-base-content/60">Total Comments Posted</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-base-100 rounded-box border border-base-300 p-4">
+        <div class="flex items-center gap-3">
+          <div class="bg-success/10 rounded-box p-3">
+            <span class="iconify lucide--percent size-6 text-success"></span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold"><%= @channel_stats.avg_success_rate || 0 %>%</p>
+            <p class="text-sm text-base-content/60">Avg Success Rate</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-base-100 rounded-box border border-base-300 p-4">
+        <div class="flex items-center gap-3">
+          <div class="bg-info/10 rounded-box p-3">
+            <span class="iconify lucide--trophy size-6 text-info"></span>
+          </div>
+          <div>
+            <p class="text-2xl font-bold"><%= @channel_stats.best_rank ? "##{@channel_stats.best_rank}" : "-" %></p>
+            <p class="text-sm text-base-content/60">Best Rank</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if @channels.empty? %>
+      <div class="bg-base-100 rounded-box border border-base-300 p-12 text-center">
+        <span class="iconify lucide--radio size-16 text-base-content/30 mx-auto mb-4"></span>
+        <h3 class="text-lg font-semibold mb-2">No channels yet</h3>
+        <p class="text-base-content/60 mb-6">Channels are created automatically when you import videos or subscribe to channels.</p>
+      </div>
+    <% else %>
+      <!-- Channels Table -->
+      <div class="bg-base-100 rounded-box border border-base-300 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+            <tr class="bg-base-200/50">
+              <th class="w-12"></th>
+              <th>Channel</th>
+              <th class="text-center w-20">Videos</th>
+              <th class="text-center w-24">Comments</th>
+              <th class="text-center w-40">Status</th>
+              <th class="text-center w-24">Success %</th>
+              <th class="text-center w-20">Best Rank</th>
+              <th class="text-center w-24">Subscribed</th>
+              <th class="text-center w-20"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <% @channels.each do |channel| %>
+              <tr class="hover:bg-base-200/30">
+                <!-- Thumbnail -->
+                <td class="p-2">
+                  <div class="shrink-0 w-10 h-10">
+                    <% if channel.thumbnail_url.present? %>
+                      <%= image_tag channel.thumbnail_url, alt: channel.name, class: "w-10 h-10 min-w-10 min-h-10 rounded-full object-cover" %>
+                    <% else %>
+                      <div class="w-10 h-10 min-w-10 min-h-10 rounded-full bg-base-200 flex items-center justify-center">
+                        <span class="iconify lucide--youtube size-5 text-base-content/30"></span>
+                      </div>
+                    <% end %>
+                  </div>
+                </td>
+
+                <!-- Channel Name -->
+                <td class="max-w-xs">
+                  <%= link_to "https://youtube.com/channel/#{channel.youtube_channel_id}",
+                              target: "_blank",
+                              class: "font-medium text-sm hover:text-primary transition-colors truncate" do %>
+                    <%= channel.name.presence || channel.youtube_channel_id %>
+                  <% end %>
+                </td>
+
+                <!-- Videos -->
+                <td class="text-center">
+                  <% if channel.videos_count.to_i > 0 %>
+                    <span class="font-semibold"><%= channel.videos_count %></span>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Comments -->
+                <td class="text-center">
+                  <% if channel.comments_count.to_i > 0 %>
+                    <span class="font-semibold"><%= channel.comments_count %></span>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Status Breakdown -->
+                <td class="text-center">
+                  <% if channel.comments_count.to_i > 0 %>
+                    <div class="flex items-center justify-center gap-1.5 text-xs">
+                      <% if channel.visible_comments_count.to_i > 0 %>
+                        <span class="badge badge-success badge-xs gap-0.5" title="Visible">
+                          <%= channel.visible_comments_count %>
+                        </span>
+                      <% end %>
+                      <% if channel.hidden_comments_count.to_i > 0 %>
+                        <span class="badge badge-warning badge-xs gap-0.5" title="Hidden">
+                          <%= channel.hidden_comments_count %>
+                        </span>
+                      <% end %>
+                      <% if channel.removed_comments_count.to_i > 0 %>
+                        <span class="badge badge-error badge-xs gap-0.5" title="Removed">
+                          <%= channel.removed_comments_count %>
+                        </span>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Success Rate -->
+                <td class="text-center">
+                  <% if channel.success_rate.present? %>
+                    <span class="font-semibold <%= channel.success_rate.to_f >= 50 ? 'text-success' : 'text-warning' %>">
+                      <%= channel.success_rate %>%
+                    </span>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Best Rank -->
+                <td class="text-center">
+                  <% if channel.best_rank.present? %>
+                    <span class="badge badge-ghost badge-sm">#<%= channel.best_rank %></span>
+                  <% else %>
+                    <span class="text-base-content/40">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Subscribed -->
+                <td class="text-center">
+                  <% if channel.subscribed? %>
+                    <span class="badge badge-success badge-sm gap-1">
+                      <span class="iconify lucide--check size-3"></span>
+                      Yes
+                    </span>
+                  <% else %>
+                    <%= button_to channels_subscriptions_path,
+                                  method: :post,
+                                  class: "btn btn-ghost btn-xs gap-1",
+                                  params: { channel_subscription: { channel_ids: [channel.youtube_channel_id], initial_import_limit: 3 } } do %>
+                      <span class="iconify lucide--plus size-3"></span>
+                      Subscribe
+                    <% end %>
+                  <% end %>
+                </td>
+
+                <!-- Actions -->
+                <td class="text-center">
+                  <%= link_to comments_path(channel_id: channel.id),
+                              class: "btn btn-ghost btn-xs gap-1",
+                              title: "View comments on this channel's videos" do %>
+                    <span class="iconify lucide--message-circle size-3.5"></span>
+                    Comments
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="mt-4 flex justify-center">
+        <%= paginate @channels, theme: 'default' %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

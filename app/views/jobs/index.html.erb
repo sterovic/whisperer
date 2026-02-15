@@ -13,7 +13,12 @@
     <div class="flex items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold">Background Jobs</h1>
-        <p class="text-base-content/60 text-sm mt-1">Manage and monitor background job execution</p>
+        <p class="text-base-content/60 text-sm mt-1">
+          Manage and monitor background job execution
+          <% if current_project %>
+            for <span class="font-medium text-base-content"><%= current_project.name %></span>
+          <% end %>
+        </p>
       </div>
       <%= link_to good_job_path, class: "btn btn-primary gap-2", target: "_blank" do %>
         <span class="iconify lucide--gauge size-4"></span>
@@ -28,130 +33,132 @@
       <% unless current_project %>
         <div class="alert alert-warning mt-4">
           <span class="iconify lucide--alert-triangle size-5"></span>
-          <span>Please select a project to run jobs that require project context.</span>
+          <span>Please select a project to manage job schedules.</span>
         </div>
       <% end %>
     </div>
 
-    <!-- Scheduled Jobs Section -->
-    <div class="bg-base-100 rounded-box border border-base-300 p-6">
-      <div class="flex items-start gap-3 mb-4">
-        <span class="iconify lucide--clock size-5 text-secondary mt-0.5"></span>
-        <div class="flex-1">
-          <h2 class="text-lg font-semibold">Scheduled Jobs</h2>
-          <p class="text-sm text-base-content/60 mt-1">Configure recurring background jobs</p>
+    <% if current_project %>
+      <!-- Scheduled Jobs Section -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="iconify lucide--clock size-5 text-secondary mt-0.5"></span>
+          <div class="flex-1">
+            <h2 class="text-lg font-semibold">Scheduled Jobs</h2>
+            <p class="text-sm text-base-content/60 mt-1">Configure recurring background jobs</p>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="overflow-x-auto">
+          <table class="table ">
+            <thead>
+            <tr>
+              <th>Job Name</th>
+              <th>Interval</th>
+              <th>Status</th>
+              <th>Last Run</th>
+              <th>Next Run</th>
+              <th class="text-right">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% @job_schedules.each do |schedule| %>
+              <tr>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <span class="iconify lucide--refresh-cw size-4 text-base-content/60"></span>
+                    <div>
+                      <div class="font-medium"><%= schedule.job_name %></div>
+                      <div class="text-xs text-base-content/60"><%= schedule.job_class %></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <%= form_with model: schedule, url: job_schedule_path(schedule), method: :patch, class: "flex items-center gap-2" do |f| %>
+                    <div class="join">
+                      <%= f.number_field :interval_minutes,
+                                         value: schedule.interval_minutes,
+                                         min: 1,
+                                         max: 1440,
+                                         class: "input input-bordered input-sm w-20 join-item",
+                                         onchange: "this.form.requestSubmit()" %>
+                      <span class="join-item bg-base-200 px-2 flex items-center text-sm">min</span>
+                    </div>
+                  <% end %>
+                </td>
+                <td class="whitespace-nowrap">
+                  <% case schedule.status %>
+                  <% when :running %>
+                      <span class="badge badge-success badge-sm gap-1 whitespace-nowrap">
+                        <span class="iconify lucide--check size-3 shrink-0"></span>
+                        Running
+                      </span>
+                  <% when :starting %>
+                      <span class="badge badge-info badge-sm gap-1 whitespace-nowrap">
+                        <span class="iconify lucide--loader size-3 shrink-0 animate-spin"></span>
+                        Starting
+                      </span>
+                  <% else %>
+                      <span class="badge badge-ghost badge-sm gap-1 whitespace-nowrap">
+                        <span class="iconify lucide--pause-circle size-3 shrink-0"></span>
+                        Stopped
+                      </span>
+                  <% end %>
+                </td>
+                <td class="whitespace-nowrap">
+                  <% if schedule.last_run_at %>
+                    <span class="text-sm text-base-content/60">
+                      <%= time_ago_in_words(schedule.last_run_at) %> ago
+                    </span>
+                  <% else %>
+                    <span class="text-sm text-base-content/40">Never</span>
+                  <% end %>
+                </td>
+                <td class="whitespace-nowrap">
+                  <% if schedule.next_run_at %>
+                    <div class="badge badge-ghost badge-sm gap-1 whitespace-nowrap">
+                      <span class="iconify lucide--timer size-3 shrink-0"></span>
+                      <% if schedule.next_run_at <= Time.current %>
+                        Now
+                      <% else %>
+                        in <%= time_ago_in_words(schedule.next_run_at) %>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-sm text-base-content/40">-</span>
+                  <% end %>
+                </td>
+                <td class="text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-2">
+                    <%= button_to run_now_job_schedule_path(schedule),
+                                  method: :post,
+                                  class: "btn btn-sm btn-ghost gap-1 whitespace-nowrap",
+                                  title: "Run immediately" do %>
+                      <span class="iconify lucide--zap size-3.5 shrink-0"></span>
+                      <span class="hidden sm:inline">Run Now</span>
+                    <% end %>
+                    <%= button_to toggle_job_schedule_path(schedule),
+                                  method: :post,
+                                  class: "btn btn-sm #{schedule.enabled? ? 'btn-error' : 'btn-success'} gap-1 whitespace-nowrap" do %>
+                      <% if schedule.enabled? %>
+                        <span class="iconify lucide--pause size-3.5 shrink-0"></span>
+                        <span class="hidden sm:inline">Stop</span>
+                      <% else %>
+                        <span class="iconify lucide--play size-3.5 shrink-0"></span>
+                        <span class="hidden sm:inline">Start</span>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
         </div>
       </div>
-
-      <div class="divider my-4"></div>
-
-      <div class="overflow-x-auto">
-        <table class="table ">
-          <thead>
-          <tr>
-            <th>Job Name</th>
-            <th>Interval</th>
-            <th>Status</th>
-            <th>Last Run</th>
-            <th>Next Run</th>
-            <th class="text-right">Actions</th>
-          </tr>
-          </thead>
-          <tbody>
-          <% @job_schedules.each do |schedule| %>
-            <tr>
-              <td>
-                <div class="flex items-center gap-2">
-                  <span class="iconify lucide--refresh-cw size-4 text-base-content/60"></span>
-                  <div>
-                    <div class="font-medium"><%= schedule.job_name %></div>
-                    <div class="text-xs text-base-content/60"><%= schedule.job_class %></div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <%= form_with model: schedule, url: job_schedule_path(schedule), method: :patch, class: "flex items-center gap-2" do |f| %>
-                  <div class="join">
-                    <%= f.number_field :interval_minutes,
-                                       value: schedule.interval_minutes,
-                                       min: 1,
-                                       max: 1440,
-                                       class: "input input-bordered input-sm w-20 join-item",
-                                       onchange: "this.form.requestSubmit()" %>
-                    <span class="join-item bg-base-200 px-2 flex items-center text-sm">min</span>
-                  </div>
-                <% end %>
-              </td>
-              <td class="whitespace-nowrap">
-                <% case schedule.status %>
-                <% when :running %>
-                    <span class="badge badge-success badge-sm gap-1 whitespace-nowrap">
-                      <span class="iconify lucide--check size-3 shrink-0"></span>
-                      Running
-                    </span>
-                <% when :starting %>
-                    <span class="badge badge-info badge-sm gap-1 whitespace-nowrap">
-                      <span class="iconify lucide--loader size-3 shrink-0 animate-spin"></span>
-                      Starting
-                    </span>
-                <% else %>
-                    <span class="badge badge-ghost badge-sm gap-1 whitespace-nowrap">
-                      <span class="iconify lucide--pause-circle size-3 shrink-0"></span>
-                      Stopped
-                    </span>
-                <% end %>
-              </td>
-              <td class="whitespace-nowrap">
-                <% if schedule.last_run_at %>
-                  <span class="text-sm text-base-content/60">
-                    <%= time_ago_in_words(schedule.last_run_at) %> ago
-                  </span>
-                <% else %>
-                  <span class="text-sm text-base-content/40">Never</span>
-                <% end %>
-              </td>
-              <td class="whitespace-nowrap">
-                <% if schedule.next_run_at %>
-                  <div class="badge badge-ghost badge-sm gap-1 whitespace-nowrap">
-                    <span class="iconify lucide--timer size-3 shrink-0"></span>
-                    <% if schedule.next_run_at <= Time.current %>
-                      Now
-                    <% else %>
-                      in <%= time_ago_in_words(schedule.next_run_at) %>
-                    <% end %>
-                  </div>
-                <% else %>
-                  <span class="text-sm text-base-content/40">-</span>
-                <% end %>
-              </td>
-              <td class="text-right whitespace-nowrap">
-                <div class="flex items-center justify-end gap-2">
-                  <%= button_to run_now_job_schedule_path(schedule),
-                                method: :post,
-                                class: "btn btn-sm btn-ghost gap-1 whitespace-nowrap",
-                                title: "Run immediately" do %>
-                    <span class="iconify lucide--zap size-3.5 shrink-0"></span>
-                    <span class="hidden sm:inline">Run Now</span>
-                  <% end %>
-                  <%= button_to toggle_job_schedule_path(schedule),
-                                method: :post,
-                                class: "btn btn-sm #{schedule.enabled? ? 'btn-error' : 'btn-success'} gap-1 whitespace-nowrap" do %>
-                    <% if schedule.enabled? %>
-                      <span class="iconify lucide--pause size-3.5 shrink-0"></span>
-                      <span class="hidden sm:inline">Stop</span>
-                    <% else %>
-                      <span class="iconify lucide--play size-3.5 shrink-0"></span>
-                      <span class="hidden sm:inline">Start</span>
-                    <% end %>
-                  <% end %>
-                </div>
-              </td>
-            </tr>
-          <% end %>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <% end %>
 
   </div>
 </div>

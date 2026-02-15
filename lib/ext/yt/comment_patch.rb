@@ -5,8 +5,6 @@ module Yt
       def insert(attributes = {})
         InsertableCommentThreads.new(auth: @auth).insert attributes
       end
-
-      private
     end
 
     class InsertableCommentThreads < Resources
@@ -47,6 +45,17 @@ module Yt
       end
 
       private
+
+      def list_params
+        super.tap do |params|
+          params[:params] = {
+            parent_id: @parent.id,
+            part: "snippet"
+          }
+
+          puts params
+        end
+      end
 
       def insert_parts
         {
@@ -93,6 +102,10 @@ module Yt
     class CommentThread
       def author_profile_image_url
         top_level_comment.snippet.data["authorProfileImageUrl"]
+      end
+
+      def replies
+        @replies ||= Collections::Comments.new(auth: @auth, parent: self)
       end
     end
   end

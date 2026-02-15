@@ -4,6 +4,8 @@ class Project < ApplicationRecord
   has_many :videos, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :smm_orders, dependent: :destroy
+  has_many :channels, dependent: :destroy
+  has_many :channel_subscriptions, dependent: :destroy
 
   validates :name, presence: true
 

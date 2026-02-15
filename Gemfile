@@ -34,6 +34,9 @@ gem "good_job", "~> 4.5"
 # YouTube API client [https://github.com/nullscreen/yt]
 gem "yt", "~> 0.34"
 
+# SerpApi client for YouTube related video search [https://serpapi.com]
+gem "serpapi", "~> 1.0"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
@@ -76,3 +79,5 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "rss", "~> 0.3.2"

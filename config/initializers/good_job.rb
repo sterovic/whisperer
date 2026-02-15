@@ -12,10 +12,10 @@ Rails.application.configure do
     preserve_job_records: true,
 
     # Maximum number of threads for job execution in async mode
-    max_threads: ENV.fetch("GOOD_JOB_MAX_THREADS", 5).to_i,
+    max_threads: ENV.fetch("GOOD_JOB_MAX_THREADS", 3).to_i,
 
     # Poll interval for checking new jobs
-    poll_interval: ENV.fetch("GOOD_JOB_POLL_INTERVAL", 30).to_i,
+    poll_interval: ENV.fetch("GOOD_JOB_POLL_INTERVAL", 10).to_i,
 
     # Enable cron scheduling
     enable_cron: true,

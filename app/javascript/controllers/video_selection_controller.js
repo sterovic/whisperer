@@ -41,17 +41,17 @@ export default class extends Controller {
       }
     }
 
-    // Update hidden inputs with selected video IDs
-    if (this.hasVideoIdsContainerTarget) {
-      this.videoIdsContainerTarget.innerHTML = ""
+    // Update hidden inputs with selected video IDs in all containers
+    this.videoIdsContainerTargets.forEach(container => {
+      container.innerHTML = ""
       selectedCheckboxes.forEach(checkbox => {
         const input = document.createElement("input")
         input.type = "hidden"
         input.name = "video_ids[]"
         input.value = checkbox.dataset.videoId
-        this.videoIdsContainerTarget.appendChild(input)
+        container.appendChild(input)
       })
-    }
+    })
   }
 
   // Clear selection after form submit

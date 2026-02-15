@@ -43,7 +43,8 @@
             <th>Account</th>
             <th>Google ID</th>
             <th>YouTube Handle</th>
-            <th>Last Connected</th>
+            <th>Authorization</th>
+            <th>Usage</th>
             <th>Token Status</th>
             <th class="text-right">Actions</th>
           </tr>
@@ -89,8 +90,37 @@
                 <% end %>
               </td>
               <td>
-                <div class="text-sm">
-                  <%= time_ago_in_words(account.updated_at) %> ago
+                <div class="flex flex-col gap-0.5 text-xs">
+                  <% if account.authorized_at.present? %>
+                    <div class="flex items-center gap-1 text-base-content/70" title="<%= account.authorized_at.strftime('%Y-%m-%d %H:%M') %>">
+                      <span class="iconify lucide--plug size-3"></span>
+                      Connected <%= time_ago_in_words(account.authorized_at) %> ago
+                    </div>
+                  <% end %>
+                  <% if account.reauthorized_at.present? %>
+                    <div class="flex items-center gap-1 text-base-content/70" title="<%= account.reauthorized_at.strftime('%Y-%m-%d %H:%M') %>">
+                      <span class="iconify lucide--refresh-cw size-3"></span>
+                      Reconnected <%= time_ago_in_words(account.reauthorized_at) %> ago
+                    </div>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div class="flex flex-col gap-0.5 text-xs">
+                  <% if account.last_used_at.present? %>
+                    <div class="flex items-center gap-1 text-base-content/70" title="<%= account.last_used_at.strftime('%Y-%m-%d %H:%M') %>">
+                      <span class="iconify lucide--activity size-3"></span>
+                      <%= time_ago_in_words(account.last_used_at) %> ago
+                    </div>
+                  <% else %>
+                    <span class="text-base-content/40">Never</span>
+                  <% end %>
+                  <% if account.token_expires_at.present? %>
+                    <div class="flex items-center gap-1 <%= account.token_expired? ? 'text-warning' : 'text-base-content/50' %>" title="<%= account.token_expires_at.strftime('%Y-%m-%d %H:%M') %>">
+                      <span class="iconify lucide--clock size-3"></span>
+                      Token <%= account.token_expired? ? 'expired' : "expires in #{time_ago_in_words(account.token_expires_at)}" %>
+                    </div>
+                  <% end %>
                 </div>
               </td>
               <td>

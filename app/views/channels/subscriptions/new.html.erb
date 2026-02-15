@@ -1,0 +1,157 @@
+<% content_for :title, "Subscribe to Channel - Whisperer" %>
+
+<div>
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="block iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <%= link_to "Channels", channels_path, class: "hover:text-base-content transition-colors" %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <%= link_to "Subscriptions", channels_subscriptions_path, class: "hover:text-base-content transition-colors" %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Subscribe</span>
+    </div>
+    <div>
+      <h1 class="text-2xl font-bold">Subscribe to Channel</h1>
+      <p class="text-base-content/60 text-sm mt-1">
+        Subscribe to a YouTube channel to automatically import new videos for <strong><%= @project.name %></strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2">
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <%= form_with model: @new_subscription, url: channels_subscriptions_path, method: :post do |f| %>
+          <div class="fieldset space-y-6">
+            <% if @known_channels.any? %>
+              <div class="space-y-3">
+                <label class="fieldset-label text-base font-medium">Known Channels</label>
+                <p class="text-sm text-base-content/60 -mt-1">
+                  Select channels from your existing videos that you haven't subscribed to yet
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                  <% @known_channels.each do |channel| %>
+                    <label class="flex items-center gap-3 cursor-pointer p-3 rounded-box border border-base-300 hover:border-primary/30 hover:bg-base-200/50 transition-all has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                      <input type="checkbox"
+                             name="channel_subscription[channel_ids][]"
+                             value="<%= channel.youtube_channel_id %>"
+                             class="checkbox checkbox-primary checkbox-sm" />
+                      <div class="shrink-0">
+                        <% if channel.thumbnail_url.present? %>
+                          <%= image_tag channel.thumbnail_url, alt: channel.name, class: "w-10 h-10 rounded-full object-cover" %>
+                        <% else %>
+                          <div class="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center">
+                            <span class="iconify lucide--youtube size-5 text-base-content/30"></span>
+                          </div>
+                        <% end %>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-sm font-medium truncate"><%= channel.name.presence || channel.youtube_channel_id %></p>
+                        <div class="flex items-center gap-2 text-xs text-base-content/50">
+                          <% if channel.subscriber_count.present? %>
+                            <span><%= number_to_human(channel.subscriber_count, precision: 1, significant: false) %> subs</span>
+                          <% end %>
+                          <% if channel.video_count.present? %>
+                            <span><%= number_to_human(channel.video_count, precision: 1, significant: false) %> videos</span>
+                          <% end %>
+                        </div>
+                      </div>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <div class="space-y-2">
+              <label for="channel_id" class="fieldset-label">Channel ID or URL</label>
+              <div class="flex gap-2">
+                <%= f.text_field :channel_id,
+                                 id: "channel_id",
+                                 class: "input w-full",
+                                 placeholder: "UCxxxxxxxxxxxxxxxxxxxxxxxx or youtube.com/channel/..." %>
+              </div>
+              <p class="text-xs text-base-content/50">
+                Enter a channel ID (starting with UC) or a YouTube channel URL
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <label for="initial_import_limit" class="fieldset-label">Initial videos to import</label>
+              <div class="flex items-center gap-2">
+                <%= f.number_field :initial_import_limit,
+                                    id: "initial_import_limit",
+                                    class: "input w-20",
+                                    value: 3,
+                                    min: 1,
+                                    max: 15 %>
+                <span class="text-sm text-base-content/60">most recent videos (max 15)</span>
+              </div>
+              <p class="text-xs text-base-content/50">
+                How many existing videos to import on the first poll after subscribing
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <%= f.submit "Subscribe", class: "btn btn-primary" %>
+              <%= link_to "Cancel", channels_subscriptions_path, class: "btn btn-ghost" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="xl:col-span-1">
+      <div class="bg-base-100 rounded-box border border-base-300 p-6">
+        <div class="flex items-start gap-3">
+          <span class="iconify lucide--info size-5 text-info mt-0.5"></span>
+          <div class="text-sm">
+            <p class="font-medium mb-2">How It Works</p>
+            <div class="text-base-content/70 space-y-2">
+              <p>
+                Channel subscriptions periodically poll YouTube channel feeds to detect and import new videos automatically.
+              </p>
+              <ol class="list-decimal list-inside space-y-1">
+                <li>Add a channel ID or URL</li>
+                <li>We poll the channel's RSS feed on a regular interval</li>
+                <li>When a new video is detected, it's automatically imported</li>
+                <li>Full video metadata is fetched via YouTube API</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="text-sm text-base-content/60">
+          <p class="font-medium mb-2">Finding Channel IDs</p>
+          <p class="mb-2">
+            The easiest way is to use a channel URL like:
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-xs font-mono">
+            <li>youtube.com/channel/UCxxxxx</li>
+          </ul>
+          <p class="mt-3 text-xs">
+            Note: URLs with @handles or custom names are not yet supported. Please use the /channel/ format.
+          </p>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="flex items-start gap-2 text-sm">
+          <span class="iconify lucide--clock size-4 text-info mt-0.5 shrink-0"></span>
+          <div>
+            <p class="font-medium mb-1">Polling Interval</p>
+            <p class="text-base-content/60">
+              Channel feeds are checked every 30 minutes by default. You can adjust the interval from the Jobs page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

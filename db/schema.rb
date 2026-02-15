@@ -10,9 +10,41 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_15_151658) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "channel_subscriptions", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.string "channel_id", null: false
+    t.string "channel_name"
+    t.datetime "subscribed_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "channel_thumbnail_url"
+    t.integer "subscriber_count"
+    t.integer "video_count"
+    t.integer "initial_import_limit", default: 3, null: false
+    t.index ["channel_id"], name: "index_channel_subscriptions_on_channel_id"
+    t.index ["project_id", "channel_id"], name: "index_channel_subscriptions_on_project_id_and_channel_id", unique: true
+    t.index ["project_id"], name: "index_channel_subscriptions_on_project_id"
+  end
+
+  create_table "channels", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.string "youtube_channel_id", null: false
+    t.string "name"
+    t.string "thumbnail_url"
+    t.string "custom_url"
+    t.text "description"
+    t.integer "subscriber_count"
+    t.integer "video_count"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "youtube_channel_id"], name: "index_channels_on_project_id_and_youtube_channel_id", unique: true
+    t.index ["project_id"], name: "index_channels_on_project_id"
+  end
 
   create_table "comments", force: :cascade do |t|
     t.string "youtube_comment_id"
@@ -31,9 +63,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
     t.string "author_avatar_url", default: "", null: false
     t.index ["google_account_id"], name: "index_comments_on_google_account_id"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
+    t.index ["project_id", "status", "parent_id"], name: "index_comments_on_project_status_parent"
     t.index ["project_id"], name: "index_comments_on_project_id"
     t.index ["status"], name: "index_comments_on_status"
     t.index ["video_id", "parent_id"], name: "index_comments_on_video_id_and_parent_id"
+    t.index ["video_id", "youtube_comment_id"], name: "index_comments_on_video_id_and_yt_comment_id"
     t.index ["video_id"], name: "index_comments_on_video_id"
     t.index ["youtube_comment_id"], name: "index_comments_on_youtube_comment_id", unique: true
   end
@@ -143,6 +177,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "token_status", default: 0, null: false
+    t.datetime "authorized_at"
+    t.datetime "reauthorized_at"
+    t.datetime "last_used_at"
     t.index ["google_id", "user_id"], name: "index_google_accounts_on_google_id_and_user_id", unique: true
     t.index ["google_id"], name: "index_google_accounts_on_google_id"
     t.index ["token_status"], name: "index_google_accounts_on_token_status"
@@ -156,8 +193,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
     t.datetime "last_run_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "project_id"
+    t.bigint "user_id"
     t.index ["enabled"], name: "index_job_schedules_on_enabled"
-    t.index ["job_class"], name: "index_job_schedules_on_job_class", unique: true
+    t.index ["job_class", "project_id"], name: "index_job_schedules_on_job_class_and_project_id", unique: true
+    t.index ["project_id"], name: "index_job_schedules_on_project_id"
+    t.index ["user_id"], name: "index_job_schedules_on_user_id"
   end
 
   create_table "project_members", force: :cascade do |t|
@@ -199,6 +240,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
     t.datetime "updated_at", null: false
     t.index ["comment_id"], name: "index_smm_orders_on_comment_id"
     t.index ["external_order_id"], name: "index_smm_orders_on_external_order_id"
+    t.index ["project_id", "status"], name: "index_smm_orders_on_project_id_and_status"
     t.index ["project_id"], name: "index_smm_orders_on_project_id"
     t.index ["service_type"], name: "index_smm_orders_on_service_type"
     t.index ["smm_panel_credential_id"], name: "index_smm_orders_on_smm_panel_credential_id"
@@ -256,16 +298,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
     t.bigint "project_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "channel_id"
+    t.datetime "published_at"
+    t.index ["channel_id"], name: "index_videos_on_channel_id"
+    t.index ["project_id", "channel_id"], name: "index_videos_on_project_id_and_channel_id"
     t.index ["project_id"], name: "index_videos_on_project_id"
     t.index ["youtube_id", "project_id"], name: "index_videos_on_youtube_id_and_project_id", unique: true
     t.index ["youtube_id"], name: "index_videos_on_youtube_id"
   end
 
+  add_foreign_key "channel_subscriptions", "projects"
+  add_foreign_key "channels", "projects"
   add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "google_accounts"
   add_foreign_key "comments", "projects"
   add_foreign_key "comments", "videos"
   add_foreign_key "google_accounts", "users"
+  add_foreign_key "job_schedules", "projects"
+  add_foreign_key "job_schedules", "users"
   add_foreign_key "project_members", "projects"
   add_foreign_key "project_members", "users"
   add_foreign_key "smm_orders", "comments"
@@ -273,5 +323,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_230436) do
   add_foreign_key "smm_orders", "smm_panel_credentials"
   add_foreign_key "smm_orders", "videos"
   add_foreign_key "smm_panel_credentials", "users"
+  add_foreign_key "videos", "channels"
   add_foreign_key "videos", "projects"
 end

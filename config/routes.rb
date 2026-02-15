@@ -41,9 +41,18 @@ Rails.application.routes.draw do
       get :import
       post :import, action: :create_import
       post :bulk_post_comments
+      post :bulk_search_related
     end
     member do
       get :comment_frequency
+    end
+  end
+
+  # Video search
+  resources :video_searches, only: [:index, :create] do
+    collection do
+      get :autocomplete
+      post :search_related
     end
   end
 
@@ -80,6 +89,12 @@ Rails.application.routes.draw do
 
   # SMM Orders (all panels)
   resources :smm_orders, only: [:index]
+
+  # Channels
+  resources :channels, only: [:index]
+  namespace :channels do
+    resources :subscriptions, only: [:index, :new, :create, :destroy]
+  end
 
   # Settings namespace
   namespace :settings do

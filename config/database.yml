@@ -17,7 +17,7 @@ default: &default
   encoding: unicode
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 15 } %>
 
 
 development:
@@ -83,4 +83,4 @@ production:
   # Heroku provides DATABASE_URL automatically
   url: <%= ENV["DATABASE_URL"] %>
   # Increase pool size for production with GoodJob
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 15 } %>

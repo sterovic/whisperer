@@ -95,6 +95,15 @@
                          class: "select select-sm select-bordered max-w-[220px]",
                          onchange: "this.form.requestSubmit()" %>
 
+          <!-- Channel -->
+          <%= select_tag :channel_id,
+                         options_for_select(
+                           [["All Channels", ""]] + @channels.map { |c| [c.name&.truncate(30) || c.youtube_channel_id, c.id] },
+                           params[:channel_id]
+                         ),
+                         class: "select select-sm select-bordered max-w-[200px]",
+                         onchange: "this.form.requestSubmit()" %>
+
           <!-- Replies -->
           <%= select_tag :replies,
                          options_for_select([
@@ -141,6 +150,8 @@
               <span class="text-sm text-base-content/60 ml-2">
                 Last updated <%= time_ago_in_words(@status_check_schedule.last_run_at) %> ago
               </span>
+            <% elsif @status_check_schedule&.enabled? %>
+              <span class="text-sm text-info ml-2">Check scheduled</span>
             <% else %>
               <span class="text-sm text-base-content/40 ml-2">Never checked</span>
             <% end %>

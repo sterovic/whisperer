@@ -2,12 +2,17 @@ class JobsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # Ensure job schedules exist
-    JobSchedule.for("CommentStatusCheckJob")
-    JobSchedule.for("CommentPostingJob")
-    JobSchedule.for("SmmOrderStatusCheckJob")
+    if current_project
+      # Ensure job schedules exist for current project
+      JobSchedule.for("CommentStatusCheckJob", current_project)
+      JobSchedule.for("CommentPostingJob", current_project)
+      JobSchedule.for("SmmOrderStatusCheckJob", current_project)
+      JobSchedule.for("ChannelFeedPollingJob", current_project)
 
-    @job_schedules = JobSchedule.order(:job_class)
+      @job_schedules = JobSchedule.where(project: current_project).order(:job_class)
+    else
+      @job_schedules = JobSchedule.none
+    end
   end
 
   def trigger
@@ -18,27 +23,22 @@ class JobsController < ApplicationController
       return
     end
 
-    job = case job_class.name
-    when "CommentPostingJob"
-      unless current_project
-        render turbo_stream: turbo_stream.append(
-          "job_progress_container",
-          partial: "jobs/progress",
-          locals: {
-            job_id: SecureRandom.uuid,
-            job_name: "Comment Posting",
-            message: "Error: Please select a project first",
-            percentage: 0,
-            status: :failed
-          }
-        )
-        return
-      end
-      job_class.perform_later(current_user.id, current_project.id)
-    else
-      job_class.perform_later(current_user.id)
+    unless current_project
+      render turbo_stream: turbo_stream.append(
+        "job_progress_container",
+        partial: "jobs/progress",
+        locals: {
+          job_id: SecureRandom.uuid,
+          job_name: job_class.name.underscore.humanize,
+          message: "Error: Please select a project first",
+          percentage: 0,
+          status: :failed
+        }
+      )
+      return
     end
 
+    job = job_class.perform_later(current_user.id, current_project.id)
     job_name = job_class.name.underscore.humanize
 
     render turbo_stream: turbo_stream.append(
@@ -55,18 +55,8 @@ class JobsController < ApplicationController
   end
 
   def schedule
-    # Update job schedule in database
-    # This would typically update a JobSchedule model that GoodJob reads from
-
     job_name = params[:job_name]
     cron_schedule = params[:cron_schedule]
-
-    # Example: Store in database for dynamic scheduling
-    # JobSchedule.find_or_create_by(name: job_name).update(
-    #   cron: cron_schedule,
-    #   class_name: 'ExampleSocialMediaJob',
-    #   args: [current_user.id]
-    # )
 
     redirect_to jobs_path, notice: "Job schedule updated successfully"
   end
@@ -76,19 +66,6 @@ class JobsController < ApplicationController
   def current_project
     current_user.current_project
   end
-  helper_method :current_project
 
-  def fetch_scheduled_jobs
-    # In a real app, fetch from database
-    # For now, return example data
-    [
-      {
-        name: "example_social_media_job",
-        class_name: "ExampleSocialMediaJob",
-        cron: "0 */6 * * *", # Every 6 hours
-        description: "Fetches social media data every 6 hours",
-        next_run: 6.hours.from_now
-      }
-    ]
-  end
+  helper_method :current_project
 end

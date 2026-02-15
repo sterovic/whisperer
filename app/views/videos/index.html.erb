@@ -15,7 +15,7 @@
         <h1 class="text-2xl font-bold">Videos</h1>
         <p class="text-base-content/60 text-sm mt-1">
           <% if current_project %>
-            <%= pluralize(@videos.length, "video") %> in <%= current_project.name %>
+            <%= pluralize(@videos.total_count, "video") %> in <%= current_project.name %>
           <% else %>
             Select a project to view videos
           <% end %>
@@ -70,6 +70,13 @@
           <%= button_tag type: :submit, class: "btn btn-secondary btn-sm gap-2" do %>
             <span class="iconify lucide--message-square-plus size-4"></span>
             Post Comments
+          <% end %>
+        <% end %>
+        <%= form_with url: bulk_search_related_videos_path, method: :post, data: { turbo: true } do |f| %>
+          <div data-video-selection-target="videoIdsContainer"></div>
+          <%= button_tag type: :submit, class: "btn btn-accent btn-sm gap-2" do %>
+            <span class="iconify lucide--search size-4"></span>
+            Find Related
           <% end %>
         <% end %>
       </div>
@@ -137,7 +144,7 @@
                   <% end %>
                 </td>
 
-                <!-- Title -->
+                <!-- Title & Info -->
                 <td class="max-w-xs">
                   <%= link_to "https://youtube.com/watch?v=#{video.youtube_id}",
                               target: "_blank",
@@ -145,6 +152,21 @@
                               title: video.title do %>
                     <%= video.title || "Untitled" %>
                   <% end %>
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-base-content/40">
+                    <% if video.channel&.name.present? %>
+                      <span class="truncate max-w-32" title="<%= video.channel.name %>"><%= video.channel.name %></span>
+                    <% end %>
+                    <% if video.published_at.present? %>
+                      <span title="Published <%= video.published_at.strftime('%b %d, %Y %H:%M') %>"><%= video.published_at.strftime('%b %d, %Y') %></span>
+                    <% end %>
+                    <% if video.view_count.to_i > 0 %>
+                      <span><%= number_to_human(video.view_count, precision: 1, significant: false) %> views</span>
+                    <% end %>
+                    <% if video.comment_count.to_i > 0 %>
+                      <span><%= number_to_human(video.comment_count, precision: 1, significant: false) %> comments</span>
+                    <% end %>
+                    <span title="Added to DB <%= video.created_at.strftime('%b %d, %Y %H:%M') %>">Added <%= time_ago_in_words(video.created_at) %> ago</span>
+                  </div>
                 </td>
 
                 <!-- Comment Activity Sparkline (lazy loaded) -->
@@ -238,6 +260,11 @@
             </tbody>
           </table>
         </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="mt-4 flex justify-center">
+        <%= paginate @videos, theme: 'default', params: { filter: @filter } %>
       </div>
     <% end %>
   <% end %>

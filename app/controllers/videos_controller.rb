@@ -3,8 +3,12 @@ class VideosController < ApplicationController
   before_action :set_video, only: [:show, :destroy, :comment_frequency]
 
   def index
+    current_user.update(videos_last_viewed_at: Time.current.iso8601)
+    @new_channel_videos_count = 0
+
     @videos = current_project.videos
                              .left_joins(:comments)
+                             .includes(:channel)
                              .select(
                                "videos.*",
                                "COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) AS app_comments_count",
@@ -20,6 +24,7 @@ class VideosController < ApplicationController
     # Apply comment visibility filter
     @filter = params[:filter]
     @videos = apply_comment_filter(@videos, @filter)
+    @videos = @videos.page(params[:page]).per(25)
   end
 
   def show
@@ -67,6 +72,31 @@ class VideosController < ApplicationController
       format.html do
         redirect_to videos_path,
                     notice: "Comment posting job started for #{@video_ids.size} video(s). Progress will appear below the table."
+      end
+    end
+  end
+
+  def bulk_search_related
+    @video_ids = params[:video_ids]
+
+    if @video_ids.blank?
+      redirect_to videos_path, alert: "No videos selected"
+      return
+    end
+
+    job = RelatedVideoSearchJob.perform_later(
+      current_user.id,
+      current_project.id,
+      video_ids: @video_ids
+    )
+
+    @job_id = job.job_id
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html do
+        redirect_to videos_path,
+                    notice: "Related video search started for #{@video_ids.size} video(s)."
       end
     end
   end

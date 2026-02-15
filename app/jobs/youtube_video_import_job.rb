@@ -110,10 +110,14 @@ class YouTubeVideoImportJob < ApplicationJob
       comment_count: yt_video.comment_count || 0,
       view_count: yt_video.view_count || 0,
       thumbnail_url: extract_thumbnail_url(yt_video),
+      published_at: yt_video.published_at,
       fetched_at: Time.current,
       raw_data: build_raw_data(yt_video, original_url)
     )
     video.save!
+
+    channel = Channel.find_or_create_from_yt_video!(@project, yt_video)
+    video.update_column(:channel_id, channel.id) if channel && video.channel_id != channel.id
 
     video
   rescue Yt::Errors::NoItems => e
