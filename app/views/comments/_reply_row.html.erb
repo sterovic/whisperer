@@ -1,0 +1,68 @@
+<div class="flex items-start gap-3 pl-4 pr-3 py-2.5 group/reply hover:bg-base-200/30 transition-colors">
+  <div class="shrink-0 mt-0.5">
+    <% if reply.google_account&.avatar_url.present? %>
+      <%= image_tag reply.google_account.avatar_url,
+                    referrerpolicy: "no-referrer",
+                    class: "w-6 h-6 rounded-full", alt: "" %>
+    <% else %>
+      <div class="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center">
+        <span class="iconify lucide--user size-3 text-base-content/40"></span>
+      </div>
+    <% end %>
+  </div>
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center gap-2 mb-0.5">
+      <span class="text-xs font-medium"><%= reply.google_account&.display_name || "-" %></span>
+      <span class="text-xs text-base-content/40" title="<%= reply.created_at.strftime('%b %d, %Y %H:%M') %>">
+        <%= time_ago_in_words(reply.created_at) %> ago
+      </span>
+      <% reply_badge_class = case reply.status
+                             when "visible" then "badge-success"
+                             when "hidden" then "badge-warning"
+                             when "removed" then "badge-error"
+                             else "badge-ghost"
+                             end %>
+      <span class="badge badge-xs <%= reply_badge_class %> whitespace-nowrap"><%= reply.status %></span>
+    </div>
+    <div class="text-sm line-clamp-2"><%= reply.text %></div>
+    <div class="flex items-center gap-3 mt-1">
+      <span class="inline-flex items-center gap-1 text-xs text-base-content/50">
+        <span class="iconify lucide--thumbs-up size-3"></span>
+        <span class="<%= reply.like_count.to_i > 0 ? 'font-medium text-base-content/70' : '' %>">
+          <%= reply.like_count || 0 %>
+        </span>
+      </span>
+      <div class="inline-flex items-center gap-1 opacity-0 translate-x-2 group-hover/reply:opacity-100 group-hover/reply:translate-x-0 focus-within:opacity-100 focus-within:translate-x-0 transition-all duration-200 ease-out">
+        <% if reply.youtube_comment_id.present? %>
+          <button class="btn btn-ghost btn-xs btn-circle tooltip tooltip-left" data-tip="Upvote via SMM" popovertarget="upvote_pop_reply_<%= reply.id %>" style="anchor-name:--upvote-reply-<%= reply.id %>">
+            <span class="iconify lucide--thumbs-up size-3"></span>
+          </button>
+          <button class="btn btn-ghost btn-xs btn-circle tooltip tooltip-left" data-tip="Copy URL"
+                  onclick="
+                  navigator.clipboard.writeText('https://www.youtube.com/watch?v=<%= reply.video&.youtube_id %>&lc=<%= reply.youtube_comment_id %>');
+                    this.dataset.tip = 'Copied!';
+                    setTimeout(() => this.dataset.tip = 'Copy URL', 1500);
+                  ">
+            <span class="iconify lucide--link size-3"></span>
+          </button>
+          <%= link_to "https://www.youtube.com/watch?v=#{reply.video&.youtube_id}&lc=#{reply.youtube_comment_id}",
+                      target: "_blank",
+                      class: "btn btn-ghost btn-xs btn-circle tooltip tooltip-left",
+                      data: { tip: "Open on YouTube" } do %>
+            <span class="iconify lucide--external-link size-3"></span>
+          <% end %>
+        <% end %>
+      </div>
+      <% if reply.youtube_comment_id.present? %>
+        <div class="dropdown dropdown-end card card-compact w-52 p-2 shadow bg-base-100 border border-base-300"
+             popover id="upvote_pop_reply_<%= reply.id %>" style="position-anchor:--upvote-reply-<%= reply.id %>">
+          <%= form_with url: upvote_comment_path(reply), method: :post, class: "flex flex-col gap-2" do |f| %>
+            <label for="" class="text-xs font-medium">Add likes via SMM</label>
+            <input type="number" name="quantity" value="10" min="1" class="input input-sm input-bordered w-full"/>
+            <button type="submit" class="btn btn-sm btn-primary">Order</button>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
