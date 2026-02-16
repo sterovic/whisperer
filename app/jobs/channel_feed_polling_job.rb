@@ -48,7 +48,9 @@ class ChannelFeedPollingJob < ScheduledJob
 
       video_id = extract_video_id(item)
       next if video_id.blank?
-      next if project.videos.exists?(youtube_id: video_id)
+
+      # Feed is newest-first; stop once we hit a known video
+      break if !first_poll && project.videos.exists?(youtube_id: video_id)
 
       video = project.videos.create!(
         youtube_id: video_id,
