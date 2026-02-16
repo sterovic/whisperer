@@ -205,7 +205,7 @@ class RelatedVideoSearchJob < ApplicationJob
       locals: {
         job_id: @job_id,
         job_name: "Related Video Search",
-        message: "Error: #{error_message}",
+        message: "Error: #{error_message.truncate(200)}",
         percentage: 0,
         status: :failed
       }
