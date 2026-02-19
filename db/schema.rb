@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_15_151658) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,6 +46,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_15_151658) do
     t.index ["project_id"], name: "index_channels_on_project_id"
   end
 
+  create_table "comment_snapshots", force: :cascade do |t|
+    t.bigint "comment_id", null: false
+    t.integer "rank"
+    t.integer "video_views"
+    t.integer "like_count"
+    t.integer "reach", default: 0
+    t.datetime "created_at", null: false
+    t.index ["comment_id"], name: "index_comment_snapshots_on_comment_id"
+  end
+
   create_table "comments", force: :cascade do |t|
     t.string "youtube_comment_id"
     t.text "text", null: false
@@ -61,6 +71,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_15_151658) do
     t.integer "post_type", default: 0
     t.string "author_display_name", default: "", null: false
     t.string "author_avatar_url", default: "", null: false
+    t.integer "total_reach", default: 0
+    t.datetime "last_snapshot_at"
     t.index ["google_account_id"], name: "index_comments_on_google_account_id"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["project_id", "status", "parent_id"], name: "index_comments_on_project_status_parent"
@@ -309,6 +321,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_15_151658) do
 
   add_foreign_key "channel_subscriptions", "projects"
   add_foreign_key "channels", "projects"
+  add_foreign_key "comment_snapshots", "comments"
   add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "google_accounts"
   add_foreign_key "comments", "projects"

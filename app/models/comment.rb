@@ -4,6 +4,7 @@ class Comment < ApplicationRecord
   belongs_to :project
   belongs_to :parent, class_name: "Comment", optional: true, touch: true
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
+  has_many :snapshots, class_name: "CommentSnapshot", dependent: :delete_all
   has_many :smm_orders, dependent: :nullify
 
   enum :status, { visible: 0, hidden: 1, removed: 2 }
@@ -34,6 +35,25 @@ class Comment < ApplicationRecord
     parent_id.present?
   end
 
+  def record_snapshot!(rank:, like_count:, video_views:)
+    previous_views = snapshots.order(created_at: :desc).pick(:video_views) || 0
+    view_delta = [video_views - previous_views, 0].max
+
+    reach = CommentReachCalculator.calculate(view_delta: view_delta, position: rank)
+
+    snapshot = snapshots.create!(
+      rank: rank,
+      video_views: video_views,
+      like_count: like_count,
+      reach: reach
+    )
+
+    update_columns(
+      total_reach: total_reach + reach,
+      last_snapshot_at: snapshot.created_at
+    )
+  end
+
   def broadcast_stream_name
     "project_#{project_id}_comments"
   end
@@ -41,7 +61,7 @@ class Comment < ApplicationRecord
   private
 
   def saved_change_to_tracked_attributes?
-    saved_change_to_status? || saved_change_to_like_count? || saved_change_to_rank?
+    saved_change_to_status? || saved_change_to_like_count? || saved_change_to_rank? || saved_change_to_total_reach?
   end
 
   def broadcast_update

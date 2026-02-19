@@ -158,6 +158,8 @@ class CommentsController < ApplicationController
       scope.order(created_at: :asc)
     when "likes"
       scope.order(like_count: :desc, created_at: :desc)
+    when "reach"
+      scope.order(total_reach: :desc, created_at: :desc)
     when "rank"
       scope.order(Arel.sql("comments.rank ASC NULLS LAST"), created_at: :desc)
     else

@@ -30,31 +30,6 @@
     <div data-simplebar class="size-full">
       <div class="mb-3 space-y-0.5 px-2.5">
         <p class="menu-label px-2.5 pt-3 pb-1.5 first:pt-0">Overview</p>
-        <!--        <div class="group collapse">-->
-        <!--          <input-->
-        <!--            aria-label="Sidemenu item trigger"-->
-        <!--            type="checkbox"-->
-        <!--            class="peer"-->
-        <!--            name="sidebar-menu-parent-item"/>-->
-        <!--          <div class="collapse-title px-2.5 py-1.5">-->
-        <!--            <span class="iconify lucide--monitor-dot size-4"></span>-->
-        <!--            <span class="grow">Dashboard</span>-->
-        <!--            <span class="iconify lucide--chevron-right arrow-icon size-3.5"></span>-->
-        <!--          </div>-->
-        <!--          <div class="collapse-content ms-6.5 !p-0">-->
-        <!--            <div class="mt-0.5 space-y-0.5">-->
-        <!--              <a class="menu-item false" href="./dashboards-ecommerce.html">-->
-        <!--                <span class="grow">Ecommerce</span>-->
-        <!--              </a>-->
-        <!--              <a class="menu-item false" href="./dashboards-crm.html">-->
-        <!--                <span class="grow">CRM</span>-->
-        <!--              </a>-->
-        <!--              <a class="menu-item false" href="./dashboards-gen-ai.html">-->
-        <!--                <span class="grow">Gen AI</span>-->
-        <!--              </a>-->
-        <!--            </div>-->
-        <!--          </div>-->
-        <!--        </div>-->
         <%= link_to dashboard_path, class: "menu-item #{current_page?(dashboard_path) || current_page?(root_path) ? 'active' : ''}" do %>
           <span class="iconify lucide--monitor size-4"></span>
           <span class="grow">Dashboard</span>
@@ -143,11 +118,11 @@
           </div>
           <div class="collapse-content ms-6.5 !p-0">
             <div class="mt-0.5 space-y-0.5">
+              <%= link_to settings_project_path, class: "menu-item #{controller_path == 'settings/project' ? 'active' : ''}" do %>
+                <span class="grow">General</span>
+              <% end %>
               <%= link_to prompt_settings_path, class: "menu-item #{controller_name == 'prompt_settings' ? 'active' : ''}" do %>
                 <span class="grow">AI/Prompt</span>
-              <% end %>
-              <%= link_to settings_project_path, class: "menu-item #{controller_path == 'settings/project' ? 'active' : ''}" do %>
-                <span class="grow">Project</span>
               <% end %>
             </div>
           </div>
@@ -177,57 +152,7 @@
     </div>
     <div class="from-base-100/60 pointer-events-none absolute start-0 end-0 bottom-0 h-7 bg-linear-to-t to-transparent"></div>
   </div>
-  <div class="mb-2">
-    <hr class="border-base-300 my-2 border-dashed"/>
-    <div class="dropdown dropdown-top dropdown-end w-full">
-      <div
-        tabindex="0"
-        role="button"
-        class="bg-base-200 hover:bg-base-300 rounded-box mx-2 mt-0 flex cursor-pointer items-center gap-2.5 px-3 py-2 transition-all">
-        <%= render "shared/ui/avatar", name: current_user.first_name, last_name: current_user.last_name %>
-        <div class="grow -space-y-0.5">
-          <p class="text-sm font-medium"><%= current_user.full_name %></p>
-          <p class="text-base-content/60 text-xs"><%= current_user.email %></p>
-        </div>
-        <span class="iconify lucide--chevrons-up-down text-base-content/60 size-4"></span>
-      </div>
-      <ul
-        role="menu"
-        tabindex="0"
-        class="dropdown-content menu bg-base-100 rounded-box shadow-base-content/4 mb-1 w-48 p-1 shadow-[0px_-10px_40px_0px]">
-        <li>
-          <%= link_to edit_user_registration_path do %>
-            <span class="iconify lucide--user size-4"></span>
-            <span>My Profile</span>
-          <% end %>
-        </li>
-        <li>
-          <a href="./pages/settings.html">
-            <span class="iconify lucide--settings size-4"></span>
-            <span>Settings</span>
-          </a>
-        </li>
-        <li>
-          <a href="./pages/get-help.html">
-            <span class="iconify lucide--help-circle size-4"></span>
-            <span>Help</span>
-          </a>
-        </li>
-        <li>
-          <div>
-            <span class="iconify lucide--bell size-4"></span>
-            <span>Notification</span>
-          </div>
-        </li>
-        <li>
-          <div>
-            <span class="iconify lucide--arrow-left-right size-4"></span>
-            <span>Switch Account</span>
-          </div>
-        </li>
-      </ul>
-    </div>
-  </div>
+  <%= render "shared/ui/plan_usage_stats" %>
 </div>
 
 <label for="layout-sidebar-toggle-trigger" id="layout-sidebar-backdrop"></label>

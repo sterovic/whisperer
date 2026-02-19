@@ -58,6 +58,7 @@ class CommentStatusCheckJob < ScheduledJob
 
     if matched
       comment.update!(like_count: yt_comment.like_count || 0, rank: rank, status: :visible)
+      comment.record_snapshot!(rank: rank, like_count: yt_comment.like_count || 0, video_views: yt_video.view_count || 0)
       import_replies(comment, yt_comment)
     else
       comment.update!(status: :hidden, rank: nil)

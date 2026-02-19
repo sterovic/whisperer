@@ -89,6 +89,14 @@
     </div>
   </td>
   <td class="text-center whitespace-nowrap">
+    <div class="flex items-center justify-center gap-1 text-sm">
+      <span class="iconify lucide--eye size-3.5 text-base-content"></span>
+      <span class="<%= comment.total_reach.to_i > 0 ? 'font-sm' : 'text-base-content' %>">
+        <%= number_to_human(comment.total_reach || 0, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+      </span>
+    </div>
+  </td>
+  <td class="text-center whitespace-nowrap">
     <% if comment.rank.present? %>
       <% rank_badge_class = if comment.rank <= 3
                               "badge-primary"
@@ -148,7 +156,7 @@
 </tr>
 <% if comment.replies.any? %>
   <tr data-collapsible-target="content" class="hidden" id="comment_<%= comment.id %>_replies">
-    <td colspan="8" class="!p-0 !bg-transparent">
+    <td colspan="9" class="!p-0 !bg-transparent">
       <div class="ml-6 my-2 border-l-2 border-primary/20">
         <div class="divide-y divide-base-200/60">
           <% comment.replies.ordered.each do |reply| %>
