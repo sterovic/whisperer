@@ -14,7 +14,7 @@ class CommentStatusCheckJob < ScheduledJob
 
   def execute(options)
     # Check top-level visible comments for this project
-    pending_comments = @project.comments.top_level.pending_check.includes(:video, :project, :replies)
+    pending_comments = @project.comments.top_level.where(appearance: [:pending_check, :top]).includes(:video, :project, :replies)
     Rails.logger.info "CommentStatusCheckJob: Checking #{pending_comments.count} top top-level comments"
 
     pending_comments.find_each do |comment|
