@@ -16,6 +16,8 @@ class YouTubeVideoImportJob < ApplicationJob
       broadcast_progress("Parsing #{urls.size} video URL(s)...")
       @current_step = 1
 
+      @new_video_count = 0
+
       urls.each_with_index do |url, index|
         youtube_id = Video.extract_youtube_id(url)
 
@@ -28,6 +30,7 @@ class YouTubeVideoImportJob < ApplicationJob
         broadcast_progress("Fetching video #{index + 1}/#{urls.size}: #{youtube_id}")
 
         video = fetch_and_store_video(youtube_id, url)
+        break if video == :limit_reached
         broadcast_progress("Video already exists, data will be updated") unless video.previously_new_record?
 
         if video && @import_existing_comments
@@ -99,10 +102,25 @@ class YouTubeVideoImportJob < ApplicationJob
     broadcast_progress("Could not fetch comments: #{e.message.truncate(50)}")
   end
 
+  def video_limit_reached?
+    return false if @user.admin?
+
+    plan = @user.current_plan
+    return false if plan.unlimited?(:videos)
+
+    @user.total_videos_count >= plan.limit_for(:videos)
+  end
+
   def fetch_and_store_video(youtube_id, original_url)
     yt_video = Yt::Video.new(id: youtube_id)
 
     video = @project.videos.find_or_initialize_by(youtube_id: youtube_id)
+
+    if video.new_record? && video_limit_reached?
+      broadcast_progress("Video limit reached for your #{@user.current_plan.name} plan. Upgrade to import more videos.")
+      return :limit_reached
+    end
+
     video.assign_attributes(
       title: yt_video.title,
       description: yt_video.description,

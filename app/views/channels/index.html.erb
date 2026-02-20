@@ -14,7 +14,11 @@
       <div>
         <h1 class="text-2xl font-bold">Channels</h1>
         <p class="text-base-content/60 text-sm mt-1">
-          <%= pluralize(@channels.total_count, "channel") %> in <%= current_project.name %>
+          <% if current_project %>
+            <%= pluralize(@channels.total_count, "channel") %> in <%= current_project.name %>
+          <% else %>
+            Select a project to view channels
+          <% end %>
         </p>
       </div>
     </div>
@@ -149,12 +153,12 @@
                   <% if channel.comments_count.to_i > 0 %>
                     <div class="flex items-center justify-center gap-1.5 text-xs">
                       <% if channel.visible_comments_count.to_i > 0 %>
-                        <span class="badge badge-success badge-xs gap-0.5" title="Visible">
+                        <span class="badge badge-success badge-xs gap-0.5" title="Top">
                           <%= channel.visible_comments_count %>
                         </span>
                       <% end %>
                       <% if channel.hidden_comments_count.to_i > 0 %>
-                        <span class="badge badge-warning badge-xs gap-0.5" title="Hidden">
+                        <span class="badge badge-warning badge-xs gap-0.5" title="Newest">
                           <%= channel.hidden_comments_count %>
                         </span>
                       <% end %>

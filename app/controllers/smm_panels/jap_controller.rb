@@ -1,5 +1,7 @@
 module SmmPanels
   class JapController < ApplicationController
+    skip_after_action :verify_authorized
+    skip_after_action :verify_policy_scoped
     before_action :set_credential, only: [:index, :update, :test_connection, :services]
 
     def index

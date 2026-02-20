@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_20_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,7 +61,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
     t.text "text", null: false
     t.bigint "video_id", null: false
     t.bigint "parent_id"
-    t.integer "status", default: 0, null: false
+    t.integer "appearance", default: 0, null: false
     t.integer "like_count", default: 0
     t.integer "rank"
     t.bigint "google_account_id"
@@ -73,11 +73,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
     t.string "author_avatar_url", default: "", null: false
     t.integer "total_reach", default: 0
     t.datetime "last_snapshot_at"
+    t.index ["appearance"], name: "index_comments_on_appearance"
     t.index ["google_account_id"], name: "index_comments_on_google_account_id"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
-    t.index ["project_id", "status", "parent_id"], name: "index_comments_on_project_status_parent"
+    t.index ["project_id", "appearance", "parent_id"], name: "index_comments_on_project_status_parent"
     t.index ["project_id"], name: "index_comments_on_project_id"
-    t.index ["status"], name: "index_comments_on_status"
     t.index ["video_id", "parent_id"], name: "index_comments_on_video_id_and_parent_id"
     t.index ["video_id", "youtube_comment_id"], name: "index_comments_on_video_id_and_yt_comment_id"
     t.index ["video_id"], name: "index_comments_on_video_id"
@@ -213,6 +213,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
     t.index ["user_id"], name: "index_job_schedules_on_user_id"
   end
 
+  create_table "plans", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.integer "price_monthly_cents", default: 0
+    t.integer "price_yearly_cents", default: 0
+    t.string "stripe_monthly_price_id"
+    t.string "stripe_yearly_price_id"
+    t.integer "max_projects"
+    t.integer "max_videos"
+    t.integer "max_comments"
+    t.integer "max_google_accounts"
+    t.jsonb "metadata", default: {}
+    t.integer "sort_order"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_plans_on_slug", unique: true
+  end
+
   create_table "project_members", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "project_id", null: false
@@ -272,6 +290,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
     t.index ["user_id"], name: "index_smm_panel_credentials_on_user_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "plan_id", null: false
+    t.string "stripe_subscription_id"
+    t.string "stripe_customer_id"
+    t.integer "status", default: 0
+    t.integer "billing_cycle", default: 0
+    t.datetime "current_period_start"
+    t.datetime "current_period_end"
+    t.datetime "canceled_at"
+    t.datetime "trial_ends_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["plan_id"], name: "index_subscriptions_on_plan_id"
+    t.index ["stripe_customer_id"], name: "index_subscriptions_on_stripe_customer_id"
+    t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
+    t.index ["user_id"], name: "index_subscriptions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -292,9 +329,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "preferences", default: {}, null: false
+    t.integer "role", default: 0, null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["role"], name: "index_users_on_role"
   end
 
   create_table "videos", force: :cascade do |t|
@@ -336,6 +375,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_153148) do
   add_foreign_key "smm_orders", "smm_panel_credentials"
   add_foreign_key "smm_orders", "videos"
   add_foreign_key "smm_panel_credentials", "users"
+  add_foreign_key "subscriptions", "plans"
+  add_foreign_key "subscriptions", "users"
   add_foreign_key "videos", "channels"
   add_foreign_key "videos", "projects"
 end

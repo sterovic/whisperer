@@ -1,21 +1,55 @@
-<div class="mb-2 border-base-200 rounded-box mx-2.5 mt-2 border px-2.5 py-2.5">
-  <div class="bg-base-200 rounded-box inline-flex items-center justify-center p-1.5">
-    <span class="iconify lucide--layers-2 size-4"></span>
+<% if current_user %>
+  <% plan = current_user.current_plan %>
+  <div class="mb-2 border-base-200 rounded-box mx-2.5 mt-2 border px-2.5 py-2.5">
+    <div class="bg-base-200 rounded-box inline-flex items-center justify-center p-1.5">
+      <span class="iconify lucide--layers-2 size-4"></span>
+    </div>
+    <div class="mt-3 mb-2">
+      <p class="text-sm font-semibold"><%= plan&.name || "Free" %> Plan</p>
+    </div>
+
+    <% if plan %>
+      <% is_admin = current_user.admin? %>
+      <div class="space-y-2 text-xs">
+        <%
+          resources = [
+            { label: "Projects", current: current_user.total_projects_count, max: plan.max_projects },
+            { label: "Videos", current: current_user.total_videos_count, max: plan.max_videos },
+            { label: "Comments", current: current_user.total_comments_count, max: plan.max_comments },
+            { label: "Accounts", current: current_user.total_google_accounts_count, max: plan.max_google_accounts }
+          ]
+        %>
+        <% resources.each do |r| %>
+          <div>
+            <div class="flex items-center justify-between mb-0.5">
+              <span class="text-base-content/70"><%= r[:label] %></span>
+              <span class="text-base-content/50">
+                <% if is_admin %>
+                  <%= r[:current] %>/&infin;
+                <% else %>
+                  <%= r[:current] %>/<%= r[:max] || "&infin;".html_safe %>
+                <% end %>
+              </span>
+            </div>
+            <% if is_admin %>
+              <progress max="100" value="0" class="progress progress-primary h-1.5"></progress>
+            <% elsif r[:max] %>
+              <% pct = [(r[:current].to_f / r[:max] * 100).round, 100].min %>
+              <progress
+                max="100"
+                value="<%= pct %>"
+                class="progress <%= pct >= 90 ? 'progress-error' : pct >= 70 ? 'progress-warning' : 'progress-primary' %> h-1.5"></progress>
+            <% else %>
+              <progress max="100" value="0" class="progress progress-primary h-1.5"></progress>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= link_to billing_path, class: "btn btn-outline btn-block border-base-300 mt-3 h-9" do %>
+      <span class="iconify lucide--zap text-base-content/80"></span>
+      Upgrade
+    <% end %>
   </div>
-  <div class="mt-5 flex items-center justify-between">
-    <p class="text-sm font-medium">Basic</p>
-    <span class="text-base-content/80 text-xs">84%</span>
-  </div>
-  <progress
-    max="2000"
-    value="1600"
-    class="progress progress-warning h-1.5 align-super"></progress>
-  <div class="-mt-2 flex items-center justify-between">
-    <span class="text-sm font-medium">320 left</span>
-    <span class="text-base-content/80 text-xs">2K Tokens</span>
-  </div>
-  <button class="btn btn-outline btn-block border-base-300 mt-3 h-9">
-    <span class="iconify lucide--zap text-base-content/80"></span>
-    Upgrade
-  </button>
-</div>
+<% end %>

@@ -1,0 +1,274 @@
+<% content_for :title, "Billing - Whisperer" %>
+
+<div>
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-base-content/60 mb-2">
+      <%= link_to root_path, class: "hover:text-base-content transition-colors" do %>
+        <span class="block iconify lucide--home size-4"></span>
+      <% end %>
+      <span class="iconify lucide--chevron-right size-3"></span>
+      <span class="text-base-content">Billing</span>
+    </div>
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Plans & Billing</h1>
+        <p class="text-base-content/60 text-sm mt-1">
+          Current plan: <span class="font-semibold text-base-content"><%= @current_plan&.name || "Free" %></span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Billing Cycle Toggle -->
+  <div data-controller="billing-toggle">
+    <div class="flex justify-center mb-8">
+      <div class="join">
+        <button class="btn join-item btn-sm" data-billing-toggle-target="monthlyBtn" data-action="billing-toggle#showMonthly">Monthly</button>
+        <button class="btn join-item btn-sm btn-active" data-billing-toggle-target="yearlyBtn" data-action="billing-toggle#showYearly">Yearly
+          <span class="badge badge-success badge-xs ml-1">Save 20%</span></button>
+      </div>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-5 gap-4" data-billing-toggle-target="cards">
+      <% @plans.each do |plan| %>
+        <% is_current = @current_plan&.id == plan.id %>
+        <div class="relative bg-base-100 rounded-box border <%= is_current ? 'border-primary border-2' : 'border-base-300' %> p-5 flex flex-col">
+          <% if is_current %>
+            <span class="badge badge-primary badge-sm absolute -top-2.5 left-1/2 -translate-x-1/2">Current Plan</span>
+          <% end %>
+
+          <h3 class="text-lg font-bold"><%= plan.name %></h3>
+
+          <!-- Monthly Price -->
+          <div data-billing-toggle-target="monthlyPrice">
+            <div class="mt-2">
+              <span class="text-2xl font-bold">$<%= plan.price_monthly_cents / 100 %></span>
+              <span class="text-base-content/60 text-sm">/mo</span>
+            </div>
+          </div>
+
+          <!-- Yearly Price -->
+          <div data-billing-toggle-target="yearlyPrice" class="hidden">
+            <div class="mt-2">
+              <span class="text-2xl font-bold">$<%= (plan.price_yearly_cents / 12.0 / 100).round %></span>
+              <span class="text-base-content/60 text-sm">/mo</span>
+            </div>
+            <p class="text-xs text-base-content/50">$<%= plan.price_yearly_cents / 100 %> billed yearly</p>
+          </div>
+
+          <!-- Limits -->
+          <ul class="mt-4 space-y-2 text-sm flex-1">
+            <li class="flex items-center gap-2">
+              <span class="iconify lucide--folder size-4 text-base-content/50"></span>
+              <%= plan.unlimited?(:projects) ? "Unlimited" : plan.max_projects %>
+              project<%= plan.max_projects == 1 ? "" : "s" unless plan.unlimited?(:projects) %>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="iconify lucide--video size-4 text-base-content/50"></span>
+              <%= plan.unlimited?(:videos) ? "Unlimited" : plan.max_videos %>
+              video<%= plan.max_videos == 1 ? "" : "s" unless plan.unlimited?(:videos) %>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="iconify lucide--message-square size-4 text-base-content/50"></span>
+              <%= plan.unlimited?(:comments) ? "Unlimited" : plan.max_comments %>
+              comment<%= plan.max_comments == 1 ? "" : "s" unless plan.unlimited?(:comments) %>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="iconify lucide--user size-4 text-base-content/50"></span>
+              <%= plan.unlimited?(:google_accounts) ? "Unlimited" : plan.max_google_accounts %> Google
+              account<%= plan.max_google_accounts == 1 ? "" : "s" unless plan.unlimited?(:google_accounts) %>
+            </li>
+          </ul>
+
+          <!-- Action -->
+          <div class="mt-4">
+            <% if is_current %>
+              <button class="btn btn-outline btn-block btn-sm" disabled>Current Plan</button>
+            <% elsif plan.free? %>
+              <button class="btn btn-outline btn-block btn-sm" disabled>Free</button>
+            <% else %>
+              <%
+                is_upgrade = plan.price_monthly_cents > (@current_plan&.price_monthly_cents || 0)
+                exceeds_limit = %i[projects videos comments google_accounts].any? do |resource|
+                  limit = plan.limit_for(resource)
+                  limit && @usage[resource] > limit
+                end
+                btn_label = is_upgrade ? "Upgrade" : "Select"
+              %>
+              <% if exceeds_limit %>
+                <div class="tooltip tooltip-top w-full" data-tip="Your current usage exceeds this plan's limits">
+                  <button class="btn btn-outline btn-block btn-sm btn-disabled" disabled><%= btn_label %></button>
+                </div>
+              <% else %>
+                <!-- Monthly checkout -->
+                <div data-billing-toggle-target="monthlyPrice">
+                  <%= button_to btn_label, checkout_billing_path, params: { plan_id: plan.id, billing_cycle: "monthly" }, method: :post, class: "btn btn-primary btn-block btn-sm", data: { turbo: false } %>
+                </div>
+                <!-- Yearly checkout -->
+                <div data-billing-toggle-target="yearlyPrice" class="hidden">
+                  <%= button_to btn_label, checkout_billing_path, params: { plan_id: plan.id, billing_cycle: "yearly" }, method: :post, class: "btn btn-primary btn-block btn-sm", data: { turbo: false } %>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @subscription %>
+    <!-- Subscription Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <!-- Current Subscription -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-5">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="iconify lucide--credit-card size-5 text-primary"></span>
+          Subscription Details
+        </h2>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-base-content/60">Plan</span>
+            <span class="font-semibold"><%= @current_plan.name %></span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-base-content/60">Status</span>
+            <% status_badge = case @subscription.status
+                              when "active" then "badge-success"
+                              when "trialing" then "badge-info"
+                              when "past_due" then "badge-warning"
+                              when "canceled" then "badge-error"
+                              else "badge-ghost"
+                              end %>
+            <span class="badge badge-sm <%= status_badge %>"><%= @subscription.status.humanize %></span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-base-content/60">Billing Cycle</span>
+            <span class="text-sm font-medium"><%= @subscription.billing_cycle.humanize %></span>
+          </div>
+          <% if @subscription.current_period_end.present? %>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-base-content/60">Current Period</span>
+              <span class="text-sm">
+                <%= @subscription.current_period_start&.strftime("%b %d, %Y") %> &ndash; <%= @subscription.current_period_end.strftime("%b %d, %Y") %>
+              </span>
+            </div>
+          <% end %>
+          <% if @stripe_subscription %>
+            <div class="divider my-1"></div>
+            <% if @stripe_subscription.cancel_at_period_end %>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-base-content/60">Cancels On</span>
+                <span class="text-sm text-error font-medium">
+                  <%= Time.at(@stripe_subscription.current_period_end).strftime("%b %d, %Y") %>
+                </span>
+              </div>
+              <div class="alert alert-warning text-sm py-2 mt-2">
+                <span class="iconify lucide--alert-triangle size-4 shrink-0"></span>
+                <span>Your subscription is set to cancel. You'll retain access until the end of your billing period.</span>
+              </div>
+            <% else %>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-base-content/60">Next Payment</span>
+                <span class="text-sm font-medium">
+                  <%= Time.at(@stripe_subscription.current_period_end).strftime("%b %d, %Y") %>
+                </span>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Manage Subscription -->
+      <div class="bg-base-100 rounded-box border border-base-300 p-5">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="iconify lucide--settings size-5 text-primary"></span>
+          Manage Subscription
+        </h2>
+        <p class="text-sm text-base-content/60 mb-4">
+          Open the Stripe Customer Portal to manage your subscription. From there you can:
+        </p>
+        <ul class="space-y-2 text-sm mb-5">
+          <li class="flex items-center gap-2">
+            <span class="iconify lucide--credit-card size-4 text-base-content/50"></span>
+            Update your payment method
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="iconify lucide--arrow-up-down size-4 text-base-content/50"></span>
+            Switch between monthly and yearly billing
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="iconify lucide--file-text size-4 text-base-content/50"></span>
+            View and download invoices
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="iconify lucide--x-circle size-4 text-base-content/50"></span>
+            Cancel your subscription
+          </li>
+        </ul>
+        <%= button_to portal_billing_path, method: :post, class: "btn btn-outline gap-2 w-full", data: { turbo: false } do %>
+          <span class="iconify lucide--external-link size-4"></span>
+          Open Customer Portal
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Payment History -->
+    <% if @invoices.any? %>
+      <div class="bg-base-100 rounded-box border border-base-300 mb-6 overflow-hidden">
+        <div class="p-5 pb-0">
+          <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span class="iconify lucide--receipt size-5 text-primary"></span>
+            Payment History
+          </h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+            <tr class="bg-base-200/50">
+              <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Date</th>
+              <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Description</th>
+              <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Amount</th>
+              <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Status</th>
+              <th class="text-right text-xs uppercase tracking-wider text-base-content/50 font-medium">Invoice</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% @invoices.each do |invoice| %>
+              <tr class="hover:bg-base-200/30">
+                <td class="text-sm"><%= Time.at(invoice.created).strftime("%b %d, %Y") %></td>
+                <td class="text-sm text-base-content/70 max-w-xs truncate">
+                  <%= invoice.lines.data.first&.description || "Subscription payment" %>
+                </td>
+                <td class="text-center text-sm font-medium">
+                  $<%= format("%.2f", invoice.amount_paid / 100.0) %>
+                </td>
+                <td class="text-center">
+                  <% inv_badge = case invoice.status
+                                 when "paid" then "badge-success"
+                                 when "open" then "badge-warning"
+                                 when "draft" then "badge-ghost"
+                                 when "void" then "badge-ghost"
+                                 when "uncollectible" then "badge-error"
+                                 else "badge-ghost"
+                                 end %>
+                  <span class="badge badge-xs <%= inv_badge %>"><%= invoice.status&.humanize %></span>
+                </td>
+                <td class="text-right">
+                  <% if invoice.invoice_pdf.present? %>
+                    <%= link_to invoice.invoice_pdf, target: "_blank", class: "btn btn-ghost btn-xs gap-1" do %>
+                      <span class="iconify lucide--download size-3.5"></span>
+                      PDF
+                    <% end %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

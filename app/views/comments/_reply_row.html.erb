@@ -16,13 +16,13 @@
       <span class="text-xs text-base-content/40" title="<%= reply.created_at.strftime('%b %d, %Y %H:%M') %>">
         <%= time_ago_in_words(reply.created_at) %> ago
       </span>
-      <% reply_badge_class = case reply.status
-                             when "visible" then "badge-success"
-                             when "hidden" then "badge-warning"
+      <% reply_badge_class = case reply.appearance
+                             when "top" then "badge-success"
+                             when "newest" then "badge-warning"
                              when "removed" then "badge-error"
                              else "badge-ghost"
                              end %>
-      <span class="badge badge-xs <%= reply_badge_class %> whitespace-nowrap"><%= reply.status %></span>
+      <span class="badge badge-xs <%= reply_badge_class %> whitespace-nowrap"><%= reply.appearance %></span>
     </div>
     <div class="text-sm line-clamp-2"><%= reply.text %></div>
     <div class="flex items-center gap-3 mt-1">

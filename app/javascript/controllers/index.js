@@ -39,3 +39,9 @@ application.register("modal", ModalController);
 
 import SearchAutocompleteController from "./search_autocomplete_controller";
 application.register("search-autocomplete", SearchAutocompleteController);
+
+import ReachChartController from "./reach_chart_controller";
+application.register("reach-chart", ReachChartController);
+
+import BillingToggleController from "./billing_toggle_controller";
+application.register("billing-toggle", BillingToggleController);

@@ -5,11 +5,14 @@ class CommentsController < ApplicationController
   before_action :set_comment, only: [:reply_form, :reply, :upvote]
 
   def index
-    @has_comments = current_project&.comments&.top_level&.exists?
+    policy_scope(Comment)
+    return if current_project.nil?
+
+    @has_comments = current_project.comments.top_level.exists?
 
     scope = current_project.comments
                            .top_level
-                           .includes(:video, :google_account, :replies)
+                           .includes(:video, :google_account, :replies, :snapshots)
 
     scope = filter_comments(scope)
     scope = sort_comments(scope)
@@ -21,6 +24,7 @@ class CommentsController < ApplicationController
   end
 
   def reply_form
+    authorize @comment, :reply?
     @google_accounts = current_user.google_accounts.excluding(@comment.google_account).usable
     @max_replies = @google_accounts.count
 
@@ -33,6 +37,7 @@ class CommentsController < ApplicationController
   end
 
   def reply
+    authorize @comment, :reply?
     num_replies = params[:num_replies].to_i
     account_ids = params[:account_ids] || []
     random_selection = params[:random_selection] == "1"
@@ -74,6 +79,7 @@ class CommentsController < ApplicationController
   end
 
   def upvote
+    authorize @comment
     quantity = params[:quantity].to_i
 
     if quantity < 1
@@ -125,7 +131,7 @@ class CommentsController < ApplicationController
   end
 
   def any_filters_active?
-    params[:status].present? || params[:source].present? || params[:video_id].present? ||
+    params[:appearance].present? || params[:source].present? || params[:video_id].present? ||
       params[:channel_id].present? || params[:q].present? || params[:replies].present? ||
       (params[:sort].present? && params[:sort] != "newest")
   end
@@ -133,7 +139,7 @@ class CommentsController < ApplicationController
   helper_method :current_project, :any_filters_active?
 
   def filter_comments(scope)
-    scope = scope.where(status: params[:status]) if params[:status].present? && Comment.statuses.key?(params[:status])
+    scope = scope.where(appearance: params[:appearance]) if params[:appearance].present? && Comment.appearances.key?(params[:appearance])
     scope = scope.where(post_type: params[:source]) if params[:source].present? && Comment.post_types.key?(params[:source])
     scope = scope.where(video_id: params[:video_id]) if params[:video_id].present?
     scope = scope.joins(video: :channel).where(channels: { id: params[:channel_id] }) if params[:channel_id].present?

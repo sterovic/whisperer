@@ -48,8 +48,8 @@
                                                 ["All Videos", ""],
                                                 ["No Comments", "no_comments"],
                                                 ["Has Comments", "has_comments"],
-                                                ["With Visible", "visible"],
-                                                ["With Hidden", "hidden"],
+                                                ["With Top", "top"],
+                                                ["With Newest", "newest"],
                                                 ["With Removed", "removed"]
                                               ], @filter),
                            class: "select select-sm select-bordered",
@@ -199,12 +199,12 @@
                   <% if video.app_comments_count.to_i > 0 %>
                     <div class="flex items-center justify-center gap-1.5 text-xs">
                       <% if video.visible_comments_count.to_i > 0 %>
-                        <span class="badge badge-success badge-xs gap-0.5" title="Visible">
+                        <span class="badge badge-success badge-xs gap-0.5" title="Top">
                           <%= video.visible_comments_count %>
                         </span>
                       <% end %>
                       <% if video.hidden_comments_count.to_i > 0 %>
-                        <span class="badge badge-warning badge-xs gap-0.5" title="Hidden">
+                        <span class="badge badge-warning badge-xs gap-0.5" title="Newest">
                           <%= video.hidden_comments_count %>
                         </span>
                       <% end %>

@@ -33,12 +33,14 @@ class RelatedVideoSearchJob < ApplicationJob
     @imported_count = 0
     @skipped_count = 0
     @seen_ids = Set.new
+    @limit_hit = false
 
     begin
       broadcast_progress("Finding related videos for #{source_videos.size} source video(s)...", 5)
 
       source_videos.each_with_index do |source_video, source_index|
         break if @imported_count >= max_results
+        break if @limit_hit
 
         source_percentage = ((source_index.to_f / source_videos.size) * 80).to_i + 10
         broadcast_progress("Fetching related videos for: #{source_video.title&.truncate(40)}", source_percentage)
@@ -53,6 +55,7 @@ class RelatedVideoSearchJob < ApplicationJob
 
           related.each do |related_video|
             break if @imported_count >= max_results
+            break if @limit_hit
 
             youtube_id = extract_youtube_id_from_related(related_video)
             next if youtube_id.blank?
@@ -77,6 +80,7 @@ class RelatedVideoSearchJob < ApplicationJob
 
       message = "Imported #{@imported_count} related video(s)"
       message += ", skipped #{@skipped_count} (filtered/errors)" if @skipped_count > 0
+      message += ". Video limit reached for your #{@user.current_plan.name} plan." if @limit_hit
       broadcast_completion(success: true, message: message)
 
     rescue StandardError => e
@@ -111,10 +115,25 @@ class RelatedVideoSearchJob < ApplicationJob
     views_str.to_s.gsub(/[^0-9]/, "").to_i
   end
 
+  def video_limit_reached?
+    return false if @user.admin?
+
+    plan = @user.current_plan
+    return false if plan.unlimited?(:videos)
+
+    @user.total_videos_count >= plan.limit_for(:videos)
+  end
+
   def import_video_by_id(youtube_id)
     yt_video = Yt::Video.new(id: youtube_id)
 
     video = @project.videos.find_or_initialize_by(youtube_id: youtube_id)
+
+    if video.new_record? && video_limit_reached?
+      @limit_hit = true
+      return
+    end
+
     video.assign_attributes(
       title: yt_video.title,
       description: yt_video.description,

@@ -64,14 +64,14 @@
                    "/>
           </label>
 
-          <!-- Status -->
-          <%= select_tag :status,
+          <!-- Appearance -->
+          <%= select_tag :appearance,
                          options_for_select([
-                                              ["All Statuses", ""],
-                                              ["Visible", "visible"],
-                                              ["Hidden", "hidden"],
+                                              ["All Appearances", ""],
+                                              ["Top", "top"],
+                                              ["Newest", "newest"],
                                               ["Removed", "removed"]
-                                            ], params[:status]),
+                                            ], params[:appearance]),
                          class: "select select-sm select-bordered",
                          onchange: "this.form.requestSubmit()" %>
 
@@ -199,7 +199,25 @@
             <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Video</th>
             <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Posted As</th>
             <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium text-center">Source</th>
-            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Status</th>
+            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">
+              <div class="flex items-center gap-1">
+                Appearance
+                <span class="iconify lucide--info size-3.5 text-base-content/40 cursor-help"
+                      onmouseenter="
+                      let t = document.getElementById('appearance_tip');
+                        let r = this.getBoundingClientRect();
+                        t.style.left = (r.left + r.width / 2) + 'px';
+                        t.style.top = (r.bottom + 6) + 'px';
+                        t.classList.remove('invisible', 'opacity-0');
+                        t.classList.add('opacity-100');
+                      "
+                      onmouseleave="
+                      let t = document.getElementById('appearance_tip');
+                        t.classList.add('invisible', 'opacity-0');
+                        t.classList.remove('opacity-100');
+                      "></span>
+              </div>
+            </th>
             <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Likes</th>
             <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Reach</th>
             <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Rank</th>
@@ -224,6 +242,41 @@
 <% if current_project %>
   <%= turbo_stream_from "project_#{current_project.id}_comments" %>
 <% end %>
+
+<!-- Fixed tooltip for Appearance header -->
+<div id="appearance_tip"
+     class="invisible opacity-0 transition-opacity duration-150 fixed z-[9999] bg-neutral text-neutral-content rounded-lg px-3 py-2 shadow-lg pointer-events-none max-w-xs text-xs -translate-x-1/2"
+     style="line-height: 1.4;">
+  YouTube sorts comments in two ways: <b>Top</b> (default algorithmic ranking) and <b>Newest</b> (chronological). A
+  comment appearing in Top has higher visibility.
+  <div class="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-neutral rotate-45"></div>
+</div>
+
+<!-- Fixed tooltip for row actions -->
+<div id="action_tip"
+     class="invisible opacity-0 transition-opacity duration-150 fixed z-[9999] bg-neutral text-neutral-content rounded-sm px-2.5 py-1.5 shadow-lg pointer-events-none whitespace-nowrap text-xs">
+  <span id="action_tip_text"></span>
+  <div class="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-neutral rotate-45"></div>
+</div>
+
+<script>
+    function showActionTip(el, text) {
+        const t = document.getElementById('action_tip');
+        document.getElementById('action_tip_text').textContent = text;
+        const r = el.getBoundingClientRect();
+        t.classList.remove('invisible', 'opacity-0');
+        t.classList.add('opacity-100');
+        const tr = t.getBoundingClientRect();
+        t.style.left = (r.left + r.width / 2 - tr.width / 2) + 'px';
+        t.style.top = (r.top - tr.height - 10) + 'px';
+    }
+
+    function hideActionTip() {
+        const t = document.getElementById('action_tip');
+        t.classList.add('invisible', 'opacity-0');
+        t.classList.remove('opacity-100');
+    }
+</script>
 
 <!-- Modal container for reply form -->
 <%= turbo_frame_tag "modal" %>

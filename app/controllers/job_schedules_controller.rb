@@ -1,4 +1,6 @@
 class JobSchedulesController < ApplicationController
+  skip_after_action :verify_authorized
+  skip_after_action :verify_policy_scoped
   before_action :set_job_schedule, only: [:update, :toggle, :run_now]
 
   def update

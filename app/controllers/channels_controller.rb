@@ -1,5 +1,9 @@
 class ChannelsController < ApplicationController
+  skip_after_action :verify_authorized
+  skip_after_action :verify_policy_scoped
   def index
+    return if current_project.nil?
+
     @channels = current_project.channels.with_stats.order("videos_count DESC").page(params[:page]).per(25)
     @channel_stats = Channel.find_by_sql([<<~SQL, current_project.id]).first
       SELECT
@@ -12,7 +16,7 @@ class ChannelsController < ApplicationController
           channels.id,
           COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) AS comments_count,
           ROUND(
-            COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 0 THEN 1 END) * 100.0
+            COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 0 THEN 1 END) * 100.0
             / NULLIF(COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END), 0),
             1
           ) AS success_rate,

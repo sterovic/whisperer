@@ -81,3 +81,9 @@ group :test do
 end
 
 gem "rss", "~> 0.3.2"
+
+# Stripe payment processing [https://github.com/stripe/stripe-ruby]
+gem "stripe", "~> 13.0"
+
+# Authorization framework [https://github.com/varvet/pundit]
+gem "pundit", "~> 2.4"

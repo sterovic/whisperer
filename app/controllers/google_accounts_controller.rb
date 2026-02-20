@@ -1,9 +1,11 @@
 class GoogleAccountsController < ApplicationController
   def index
+    policy_scope(GoogleAccount)
     @google_accounts = current_user.google_accounts.order(created_at: :desc)
   end
 
-  def authorize
+  def connect
+    authorize GoogleAccount, :connect?
     redirect_uri = oauth_callback_google_accounts_url
     scopes = %w[youtube.readonly youtube youtube.force-ssl userinfo.email userinfo.profile]
 
@@ -15,6 +17,7 @@ class GoogleAccountsController < ApplicationController
   end
 
   def oauth_callback
+    authorize GoogleAccount, :connect?
     if params[:error].present?
       puts params[:error]
       redirect_to google_accounts_path, alert: "Authorization failed: #{params[:error]}"
@@ -55,6 +58,7 @@ class GoogleAccountsController < ApplicationController
 
   def disconnect
     @google_account = current_user.google_accounts.find(params[:id])
+    authorize @google_account, :destroy?
 
     # Prefer refresh_token for revocation (access_token likely expired)
     revoke_token = @google_account.refresh_token.presence || @google_account.access_token.presence

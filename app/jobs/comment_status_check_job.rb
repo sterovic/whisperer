@@ -14,8 +14,8 @@ class CommentStatusCheckJob < ScheduledJob
 
   def execute(options)
     # Check top-level visible comments for this project
-    visible_comments = @project.comments.top_level.visible.includes(:video, :project, :replies)
-    Rails.logger.info "CommentStatusCheckJob: Checking #{visible_comments.count} visible top-level comments"
+    visible_comments = @project.comments.top_level.top.includes(:video, :project, :replies)
+    Rails.logger.info "CommentStatusCheckJob: Checking #{visible_comments.count} top top-level comments"
 
     visible_comments.find_each do |comment|
       check_comment_status(comment)
@@ -24,8 +24,8 @@ class CommentStatusCheckJob < ScheduledJob
     end
 
     # Check our own replies (replies we posted) for this project
-    our_replies = @project.comments.where.not(parent_id: nil).visible.includes(:video, :project, :parent)
-    Rails.logger.info "CommentStatusCheckJob: Checking #{our_replies.count} visible replies"
+    our_replies = @project.comments.where.not(parent_id: nil).top.includes(:video, :project, :parent)
+    Rails.logger.info "CommentStatusCheckJob: Checking #{our_replies.count} top replies"
 
     our_replies.find_each do |reply|
       check_reply_status(reply)
@@ -57,14 +57,14 @@ class CommentStatusCheckJob < ScheduledJob
     end
 
     if matched
-      comment.update!(like_count: yt_comment.like_count || 0, rank: rank, status: :visible)
+      comment.update!(like_count: yt_comment.like_count || 0, rank: rank, appearance: :top)
       comment.record_snapshot!(rank: rank, like_count: yt_comment.like_count || 0, video_views: yt_video.view_count || 0)
       import_replies(comment, yt_comment)
     else
-      comment.update!(status: :hidden, rank: nil)
+      comment.update!(appearance: :newest, rank: nil)
     end
   rescue Yt::Errors::NoItems => e
-    comment.update!(status: :removed, rank: nil)
+    comment.update!(appearance: :removed, rank: nil)
   end
 
   def check_reply_status(reply)
@@ -77,13 +77,13 @@ class CommentStatusCheckJob < ScheduledJob
       yt_reply.text_display # Trigger API call
 
       # Update like count if still accessible
-      reply.update!(like_count: yt_reply.like_count || 0, status: :visible)
+      reply.update!(like_count: yt_reply.like_count || 0, appearance: :top)
     rescue Yt::Errors::NoItems
       # Reply was removed
-      reply.update!(status: :removed)
+      reply.update!(appearance: :removed)
     rescue Yt::Errors::Forbidden
       # Reply may be hidden or inaccessible
-      reply.update!(status: :hidden)
+      reply.update!(appearance: :newest)
     end
   end
 
@@ -111,7 +111,7 @@ class CommentStatusCheckJob < ScheduledJob
             author_display_name: yt_reply.author_display_name,
             author_avatar_url: yt_reply.author_profile_image_url,
             like_count: yt_reply.like_count || 0,
-            status: :visible,
+            appearance: :top,
             post_type: :manual
           )
           imported_count += 1

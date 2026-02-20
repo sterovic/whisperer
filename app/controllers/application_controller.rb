@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   include YouTubeErrorHandler
+  include Pundit::Authorization
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
@@ -13,6 +14,11 @@ class ApplicationController < ActionController::Base
   before_action :set_current_project
   before_action :set_new_channel_videos_count
 
+  after_action :verify_authorized, unless: -> { skip_pundit? || action_name == "index" }
+  after_action :verify_policy_scoped, if: -> { action_name == "index" && !skip_pundit? }
+
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
   protected
 
   def configure_permitted_parameters
@@ -21,6 +27,14 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def user_not_authorized
+    redirect_to(request.referrer || root_path, alert: "You've reached your plan limit. Upgrade to continue.")
+  end
+
+  def skip_pundit?
+    devise_controller? || self.class == Rails::HealthController
+  end
 
   def determine_layout
     if devise_edit_account_screen?

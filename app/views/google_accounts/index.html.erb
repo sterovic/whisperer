@@ -15,7 +15,7 @@
         <h1 class="text-2xl font-bold">Google Accounts</h1>
         <p class="text-base-content/60 text-sm mt-1">Manage your connected YouTube accounts for API access</p>
       </div>
-      <%= link_to authorize_google_accounts_path, data: { turbo_prefetch: false }, class: "btn btn-primary gap-2" do %>
+      <%= link_to connect_google_accounts_path, data: { turbo_prefetch: false }, class: "btn btn-primary gap-2" do %>
         <span class="iconify lucide--plus size-4"></span>
         Connect Account
       <% end %>
@@ -28,7 +28,7 @@
       <span class="iconify lucide--user-circle size-16 text-base-content/30 mx-auto mb-4"></span>
       <h3 class="text-lg font-semibold mb-2">No accounts connected</h3>
       <p class="text-base-content/60 mb-6">Connect a Google account to access YouTube data and features.</p>
-      <%= link_to authorize_google_accounts_path, data: { turbo_prefetch: false }, class: "btn btn-primary gap-2" do %>
+      <%= link_to connect_google_accounts_path, data: { turbo_prefetch: false }, class: "btn btn-primary gap-2" do %>
         <span class="iconify lucide--plus size-4"></span>
         Connect Your First Account
       <% end %>
@@ -149,7 +149,7 @@
               <td class="text-right">
                 <div class="flex items-center justify-end gap-2">
                   <% if account.revoked? || account.unauthorized? %>
-                    <%= link_to authorize_google_accounts_path,
+                    <%= link_to connect_google_accounts_path,
                                 data: { turbo_prefetch: false },
                                 class: "btn btn-ghost btn-sm text-primary gap-1" do %>
                       <span class="iconify lucide--refresh-cw size-4"></span>

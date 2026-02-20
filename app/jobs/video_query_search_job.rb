@@ -43,8 +43,11 @@ class VideoQuerySearchJob < ApplicationJob
 
       broadcast_progress("Found #{candidates.size} candidates, applying filters...", 20)
 
+      @limit_hit = false
+
       candidates.each_with_index do |yt_video, index|
         break if @imported_count >= max_results
+        break if @limit_hit
 
         percentage = 20 + ((index.to_f / candidates.size) * 70).to_i
 
@@ -65,6 +68,7 @@ class VideoQuerySearchJob < ApplicationJob
 
       message = "Imported #{@imported_count} video(s)"
       message += ", skipped #{@skipped_count} (filtered)" if @skipped_count > 0
+      message += ". Video limit reached for your #{@user.current_plan.name} plan." if @limit_hit
       broadcast_completion(success: true, message: message)
 
     rescue StandardError => e
@@ -87,8 +91,23 @@ class VideoQuerySearchJob < ApplicationJob
     end
   end
 
+  def video_limit_reached?
+    return false if @user.admin?
+
+    plan = @user.current_plan
+    return false if plan.unlimited?(:videos)
+
+    @user.total_videos_count >= plan.limit_for(:videos)
+  end
+
   def import_video(yt_video)
     video = @project.videos.find_or_initialize_by(youtube_id: yt_video.id)
+
+    if video.new_record? && video_limit_reached?
+      @limit_hit = true
+      return
+    end
+
     video.assign_attributes(
       title: yt_video.title,
       description: yt_video.description,

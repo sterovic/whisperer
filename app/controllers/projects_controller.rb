@@ -2,18 +2,21 @@ class ProjectsController < ApplicationController
   before_action :set_project, only: [:show, :edit, :update, :destroy, :switch]
 
   def index
-    @projects = current_user.projects.order(:name)
+    @projects = policy_scope(Project).order(:name)
   end
 
   def show
+    authorize @project
   end
 
   def new
     @project = Project.new
+    authorize @project
   end
 
   def create
     @project = Project.new(project_params)
+    authorize @project
 
     if @project.save
       # Create project membership for current user
@@ -28,9 +31,11 @@ class ProjectsController < ApplicationController
   end
 
   def edit
+    authorize @project
   end
 
   def update
+    authorize @project
     if @project.update(project_params)
       redirect_to root_path, notice: "Project updated successfully"
     else
@@ -39,6 +44,7 @@ class ProjectsController < ApplicationController
   end
 
   def destroy
+    authorize @project
     @project.destroy
 
     # If deleted project was current, switch to another
@@ -50,6 +56,7 @@ class ProjectsController < ApplicationController
   end
 
   def switch
+    authorize @project
     current_user.current_project = @project
     redirect_to root_path, notice: "Switched to #{@project.name}"
   end

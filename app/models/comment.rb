@@ -7,7 +7,7 @@ class Comment < ApplicationRecord
   has_many :snapshots, class_name: "CommentSnapshot", dependent: :delete_all
   has_many :smm_orders, dependent: :nullify
 
-  enum :status, { visible: 0, hidden: 1, removed: 2 }
+  enum :appearance, { top: 0, newest: 1, removed: 2 }
   enum :post_type, { via_api: 0, via_smm: 1, manual: 2 }
 
   validates :text, presence: true
@@ -54,6 +54,24 @@ class Comment < ApplicationRecord
     )
   end
 
+  # TODO: Remove once real snapshots are flowing
+  def mock_snapshot_data(count: 12)
+    rng = Random.new(id || 0) # stable per-comment so it doesn't change on reload
+    video_views = rng.rand(1_000..50_000)
+    likes = rng.rand(0..20)
+    rank = rng.rand(1..15)
+
+    count.times.map do |i|
+      view_delta = rng.rand(500..5_000)
+      video_views += view_delta
+      likes += rng.rand(0..3)
+      rank = (rank + rng.rand(-2..2)).clamp(1, 30)
+      reach = CommentReachCalculator.calculate(view_delta: view_delta, position: rank)
+
+      { rank: rank, video_views: video_views, like_count: likes, reach: reach, created_at: (count - i).hours.ago.iso8601 }
+    end
+  end
+
   def broadcast_stream_name
     "project_#{project_id}_comments"
   end
@@ -61,7 +79,7 @@ class Comment < ApplicationRecord
   private
 
   def saved_change_to_tracked_attributes?
-    saved_change_to_status? || saved_change_to_like_count? || saved_change_to_rank? || saved_change_to_total_reach?
+    saved_change_to_appearance? || saved_change_to_like_count? || saved_change_to_rank? || saved_change_to_total_reach?
   end
 
   def broadcast_update

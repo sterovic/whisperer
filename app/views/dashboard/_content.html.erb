@@ -48,16 +48,16 @@
       </div>
     </div>
 
-    <!-- Visible Comments -->
-    <%= link_to comments_path(status: :visible) do %>
+    <!-- Top Comments -->
+    <%= link_to comments_path(appearance: :top) do %>
       <div class="bg-base-100 rounded-box border border-base-300 p-4">
         <div class="flex items-center gap-3">
           <div class="bg-success/10 rounded-box p-3">
             <span class="iconify lucide--eye size-6 text-success"></span>
           </div>
           <div>
-            <p class="text-2xl font-bold"><%= @current_project.comments.visible.count %></p>
-            <p class="text-sm text-base-content/60">Visible</p>
+            <p class="text-2xl font-bold"><%= @current_project.comments.top.count %></p>
+            <p class="text-sm text-base-content/60">Top</p>
           </div>
         </div>
       </div>
@@ -159,13 +159,13 @@
             <li class="p-2 rounded-lg hover:bg-base-200 transition-colors">
               <p class="text-sm line-clamp-2"><%= comment.text %></p>
               <div class="flex items-center gap-2 mt-1">
-                <% badge_class = case comment.status
-                                 when "visible" then "badge-success"
-                                 when "hidden" then "badge-warning"
+                <% badge_class = case comment.appearance
+                                 when "top" then "badge-success"
+                                 when "newest" then "badge-warning"
                                  when "removed" then "badge-error"
                                  else "badge-ghost"
                                  end %>
-                <span class="badge badge-xs <%= badge_class %>"><%= comment.status %></span>
+                <span class="badge badge-xs <%= badge_class %>"><%= comment.appearance %></span>
                 <span class="text-xs text-base-content/60"><%= time_ago_in_words(comment.created_at) %> ago</span>
               </div>
             </li>

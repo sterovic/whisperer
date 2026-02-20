@@ -3,6 +3,9 @@ class VideosController < ApplicationController
   before_action :set_video, only: [:show, :destroy, :comment_frequency]
 
   def index
+    policy_scope(Video)
+    return if current_project.nil?
+
     current_user.update(videos_last_viewed_at: Time.current.iso8601)
     @new_channel_videos_count = 0
 
@@ -12,9 +15,9 @@ class VideosController < ApplicationController
                              .select(
                                "videos.*",
                                "COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) AS app_comments_count",
-                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 0 THEN 1 END) AS visible_comments_count",
-                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 1 THEN 1 END) AS hidden_comments_count",
-                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 2 THEN 1 END) AS removed_comments_count",
+                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 0 THEN 1 END) AS visible_comments_count",
+                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 1 THEN 1 END) AS hidden_comments_count",
+                               "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 2 THEN 1 END) AS removed_comments_count",
                                "COALESCE(SUM(CASE WHEN comments.parent_id IS NULL THEN comments.like_count ELSE 0 END), 0) AS total_comment_likes",
                                "MIN(CASE WHEN comments.parent_id IS NULL THEN comments.rank END) AS best_rank"
                              )
@@ -28,14 +31,17 @@ class VideosController < ApplicationController
   end
 
   def show
+    authorize @video
   end
 
   def destroy
+    authorize @video
     @video.destroy
     redirect_to videos_path, notice: "Video removed successfully"
   end
 
   def comment_frequency
+    authorize @video, :show?
     @frequency = @video.comment_frequency(period: 7.days)
     render partial: "videos/sparkline", locals: { frequency: @frequency, video: @video }
   rescue Yt::Errors::Forbidden => e
@@ -51,6 +57,7 @@ class VideosController < ApplicationController
   end
 
   def bulk_post_comments
+    authorize Comment, :create?
     @video_ids = params[:video_ids]
 
     if @video_ids.blank?
@@ -77,6 +84,7 @@ class VideosController < ApplicationController
   end
 
   def bulk_search_related
+    authorize Video, :show?
     @video_ids = params[:video_ids]
 
     if @video_ids.blank?
@@ -102,10 +110,11 @@ class VideosController < ApplicationController
   end
 
   def import
-    # Show the import form
+    authorize Video, :import?
   end
 
   def create_import
+    authorize Video, :create?
     urls = params[:urls]
 
     if urls.blank?
@@ -162,12 +171,12 @@ class VideosController < ApplicationController
 
   def apply_comment_filter(videos, filter)
     case filter
-    when "visible"
-      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 0 THEN 1 END) > 0")
-    when "hidden"
-      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 1 THEN 1 END) > 0")
+    when "top"
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 0 THEN 1 END) > 0")
+    when "newest"
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 1 THEN 1 END) > 0")
     when "removed"
-      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 2 THEN 1 END) > 0")
+      videos.having("COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 2 THEN 1 END) > 0")
     when "no_comments"
       videos.having("COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) = 0")
     when "has_comments"

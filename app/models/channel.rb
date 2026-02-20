@@ -10,10 +10,10 @@ class Channel < ApplicationRecord
         "channels.*",
         "COUNT(DISTINCT videos.id) AS videos_count",
         "COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END) AS comments_count",
-        "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 0 THEN 1 END) AS visible_comments_count",
-        "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 1 THEN 1 END) AS hidden_comments_count",
-        "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 2 THEN 1 END) AS removed_comments_count",
-        "ROUND(COUNT(CASE WHEN comments.parent_id IS NULL AND comments.status = 0 THEN 1 END) * 100.0 / NULLIF(COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END), 0), 1) AS success_rate",
+        "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 0 THEN 1 END) AS visible_comments_count",
+        "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 1 THEN 1 END) AS hidden_comments_count",
+        "COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 2 THEN 1 END) AS removed_comments_count",
+        "ROUND(COUNT(CASE WHEN comments.parent_id IS NULL AND comments.appearance = 0 THEN 1 END) * 100.0 / NULLIF(COUNT(CASE WHEN comments.parent_id IS NULL THEN comments.id END), 0), 1) AS success_rate",
         "MIN(CASE WHEN comments.parent_id IS NULL THEN comments.rank END) AS best_rank",
         "COALESCE(SUM(CASE WHEN comments.parent_id IS NULL THEN comments.like_count ELSE 0 END), 0) AS total_likes"
       )

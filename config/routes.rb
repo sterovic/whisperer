@@ -62,7 +62,7 @@ Rails.application.routes.draw do
       patch :disconnect
     end
     collection do
-      get :authorize
+      get :connect
       get :oauth_callback
     end
   end
@@ -111,6 +111,17 @@ Rails.application.routes.draw do
     member do
       post :switch
     end
+  end
+
+  # Billing
+  resource :billing, only: [:show], controller: "billing" do
+    post :checkout
+    post :portal
+  end
+
+  # Stripe webhooks
+  namespace :webhooks do
+    resource :stripe, only: [:create], controller: "stripe"
   end
 
   # Defines the root path route ("/")

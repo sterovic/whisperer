@@ -72,13 +72,13 @@
     </span>
   </td>
   <td class="whitespace-nowrap">
-    <% badge_class = case comment.status
-                     when "visible" then "badge-success"
-                     when "hidden" then "badge-warning"
+    <% badge_class = case comment.appearance
+                     when "top" then "badge-success"
+                     when "newest" then "badge-warning"
                      when "removed" then "badge-error"
                      else "badge-ghost"
                      end %>
-    <span class="badge badge-outline badge-sm <%= badge_class %> whitespace-nowrap"><%= comment.status %></span>
+    <span class="badge badge-outline badge-sm <%= badge_class %> whitespace-nowrap"><%= comment.appearance %></span>
   </td>
   <td class="text-center whitespace-nowrap">
     <div class="flex items-center justify-center gap-1 text-sm">
@@ -88,12 +88,27 @@
       </span>
     </div>
   </td>
-  <td class="text-center whitespace-nowrap">
-    <div class="flex items-center justify-center gap-1 text-sm">
-      <span class="iconify lucide--eye size-3.5 text-base-content"></span>
-      <span class="<%= comment.total_reach.to_i > 0 ? 'font-sm' : 'text-base-content' %>">
-        <%= number_to_human(comment.total_reach || 0, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+  <td class="text-center whitespace-nowrap" style="overflow: visible;">
+    <%
+      snapshot_data = comment.snapshots.order(:created_at)
+                             .select(:rank, :video_views, :like_count, :reach, :created_at)
+                             .map { |s| { rank: s.rank, video_views: s.video_views, like_count: s.like_count, reach: s.reach, created_at: s.created_at.iso8601 } }
+      total = comment.total_reach || 0
+    %>
+    <%# snapshot_data = comment.mock_snapshot_data %>
+    <%# total = snapshot_data.sum { |s| s[:reach] } %>
+    <div id="reach_chart_<%= comment.id %>"
+         data-controller="reach-chart"
+         data-reach-chart-snapshots-value="<%= snapshot_data.to_json %>"
+         class="relative inline-flex flex-col items-center">
+      <div data-reach-chart-target="chart"></div>
+      <span class="text-[10px] text-base-content/60 mt-0.5">
+        <%= number_to_human(total, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+        reach
       </span>
+      <div data-reach-chart-target="tooltip"
+           class="invisible opacity-0 transition-opacity duration-150 fixed z-[9999] bg-neutral text-neutral-content rounded-lg px-2.5 py-1.5 shadow-lg pointer-events-none whitespace-nowrap">
+      </div>
     </div>
   </td>
   <td class="text-center whitespace-nowrap">
@@ -121,25 +136,32 @@
                   focus-within:opacity-100 focus-within:translate-x-0
                   transition-all duration-200 ease-out">
         <%= link_to reply_form_comment_path(comment),
-                    class: "btn btn-ghost btn-xs tooltip tooltip-left",
-                    data: { turbo_frame: "modal", tip: "Reply" } do %>
+                    class: "btn btn-ghost btn-xs",
+                    data: { turbo_frame: "modal" },
+                    onmouseenter: "showActionTip(this, 'Reply')",
+                    onmouseleave: "hideActionTip()" do %>
           <span class="iconify lucide--reply size-4"></span>
         <% end %>
-        <button class="btn btn-ghost btn-xs tooltip tooltip-left" data-tip="Upvote via SMM" popovertarget="upvote_pop_<%= comment.id %>" style="anchor-name:--upvote-<%= comment.id %>">
+        <button class="btn btn-ghost btn-xs" popovertarget="upvote_pop_<%= comment.id %>" style="anchor-name:--upvote-<%= comment.id %>"
+                onmouseenter="showActionTip(this, 'Upvote via SMM')"
+                onmouseleave="hideActionTip()">
           <span class="iconify lucide--thumbs-up size-4"></span>
         </button>
-        <button class="btn btn-ghost btn-xs tooltip tooltip-left" data-tip="Copy URL"
+        <button class="btn btn-ghost btn-xs"
+                onmouseenter="showActionTip(this, 'Copy URL')"
+                onmouseleave="hideActionTip()"
                 onclick="
                 navigator.clipboard.writeText('https://www.youtube.com/watch?v=<%= comment.video&.youtube_id %>&lc=<%= comment.youtube_comment_id %>');
-                  this.dataset.tip = 'Copied!';
-                  setTimeout(() => this.dataset.tip = 'Copy URL', 1500);
+                  showActionTip(this, 'Copied!');
+                  setTimeout(() => showActionTip(this, 'Copy URL'), 1500);
                 ">
           <span class="iconify lucide--link size-4"></span>
         </button>
         <%= link_to "https://www.youtube.com/watch?v=#{comment.video&.youtube_id}&lc=#{comment.youtube_comment_id}",
                     target: "_blank",
-                    class: "btn btn-ghost btn-xs tooltip tooltip-left",
-                    data: { tip: "Open on YouTube" } do %>
+                    class: "btn btn-ghost btn-xs",
+                    onmouseenter: "showActionTip(this, 'Open on YouTube')",
+                    onmouseleave: "hideActionTip()" do %>
           <span class="iconify lucide--external-link size-4"></span>
         <% end %>
       </div>
