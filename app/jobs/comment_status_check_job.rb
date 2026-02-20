@@ -14,10 +14,10 @@ class CommentStatusCheckJob < ScheduledJob
 
   def execute(options)
     # Check top-level visible comments for this project
-    visible_comments = @project.comments.top_level.top.includes(:video, :project, :replies)
-    Rails.logger.info "CommentStatusCheckJob: Checking #{visible_comments.count} top top-level comments"
+    pending_comments = @project.comments.top_level.pending_check.includes(:video, :project, :replies)
+    Rails.logger.info "CommentStatusCheckJob: Checking #{pending_comments.count} top top-level comments"
 
-    visible_comments.find_each do |comment|
+    pending_comments.find_each do |comment|
       check_comment_status(comment)
     rescue StandardError => e
       Rails.logger.error "Error checking comment #{comment.id}: #{e.message}"
@@ -111,7 +111,7 @@ class CommentStatusCheckJob < ScheduledJob
             author_display_name: yt_reply.author_display_name,
             author_avatar_url: yt_reply.author_profile_image_url,
             like_count: yt_reply.like_count || 0,
-            appearance: :top,
+            appearance: :pending_check,
             post_type: :manual
           )
           imported_count += 1

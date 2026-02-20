@@ -84,7 +84,7 @@ class YouTubeVideoImportJob < ApplicationJob
         author_display_name: thread.author_display_name,
         author_avatar_url: thread.author_profile_image_url,
         like_count: thread.like_count || 0,
-        status: :visible,
+        appearance: :pending_check,
         post_type: :manual
       )
 

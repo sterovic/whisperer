@@ -7,7 +7,7 @@ class Comment < ApplicationRecord
   has_many :snapshots, class_name: "CommentSnapshot", dependent: :delete_all
   has_many :smm_orders, dependent: :nullify
 
-  enum :appearance, { top: 0, newest: 1, removed: 2 }
+  enum :appearance, { top: 0, newest: 1, removed: 2, pending_check: 3 }
   enum :post_type, { via_api: 0, via_smm: 1, manual: 2 }
 
   validates :text, presence: true

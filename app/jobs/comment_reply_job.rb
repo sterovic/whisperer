@@ -97,7 +97,7 @@ class CommentReplyJob < ApplicationJob
       project: @project,
       parent: @comment,
       youtube_comment_id: youtube_reply_id,
-      appearance: :top,
+      appearance: :pending_check,
       author_display_name: yt_response.author_display_name,
       author_avatar_url: yt_response.author_profile_image_url,
       post_type: :via_api

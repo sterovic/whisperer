@@ -68,9 +68,10 @@
           <%= select_tag :appearance,
                          options_for_select([
                                               ["All Appearances", ""],
+                                              ["Pending Check", "pending_check"],
                                               ["Top", "top"],
                                               ["Newest", "newest"],
-                                              ["Removed", "removed"]
+                                              ["Removed", "removed"],
                                             ], params[:appearance]),
                          class: "select select-sm select-bordered",
                          onchange: "this.form.requestSubmit()" %>
