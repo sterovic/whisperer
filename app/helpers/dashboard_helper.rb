@@ -66,7 +66,7 @@ module DashboardHelper
 
   def project_avatar(project_id)
     seed = project_id.to_i
-    tag.div class: "#{project_bg_color(seed)} rounded-box flex size-8 items-center justify-center shrink-0" do
+    tag.div class: "#{project_bg_color(seed)} rounded-box flex size-9 items-center justify-center shrink-0" do
       tag.div class: "mask #{project_mask(seed)} #{project_color(seed)} size-5"
     end
   end

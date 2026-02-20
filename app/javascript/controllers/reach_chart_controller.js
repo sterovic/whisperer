@@ -47,12 +47,15 @@ export default class extends Controller {
       return { ...s, cumulative };
     });
 
+    // If only one snapshot, prepend a zero-point so we get a line from 0 to the value
+    if (points.length === 1) {
+      points.unshift({ ...points[0], cumulative: 0, reach: 0, _synthetic: true });
+    }
+
     const maxY = Math.max(...points.map((p) => p.cumulative), 1);
 
     const coords = points.map((p, i) => ({
-      x:
-        pad.left +
-        (points.length === 1 ? chartW : (i / (points.length - 1)) * chartW),
+      x: pad.left + (i / (points.length - 1)) * chartW,
       y: pad.top + chartH - (p.cumulative / maxY) * chartH,
       data: p,
     }));

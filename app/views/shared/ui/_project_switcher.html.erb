@@ -4,7 +4,7 @@
       <div tabindex="0" class="border border-base-300 hover:bg-base-200 rounded-box flex cursor-pointer items-center gap-2 p-1 pe-2">
         <%= project_avatar(@current_project.id) %>
         <div class="grow min-w-0">
-          <p class="text-sm/none font-medium truncate"><%= @current_project.name %></p>
+          <p class="text-sm font-medium truncate"><%= @current_project.name %></p>
           <p class="mt-1 text-xs/none opacity-60 truncate"><%= @current_project.description.presence || "No description" %></p>
         </div>
         <span class="iconify lucide--chevrons-up-down text-base-content/50 shrink-0"></span>
