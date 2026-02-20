@@ -36,7 +36,7 @@ class Comment < ApplicationRecord
   end
 
   def record_snapshot!(rank:, like_count:, video_views:)
-    previous_views = snapshots.order(created_at: :desc).pick(:video_views) || 0
+    previous_views = snapshots.last&.video_views || video.view_count
     view_delta = [video_views - previous_views, 0].max
 
     reach = CommentReachCalculator.calculate(view_delta: view_delta, position: rank)
