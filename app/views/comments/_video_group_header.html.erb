@@ -1,0 +1,51 @@
+<div class="sticky top-16 z-2 bg-base-100 shadow-sm rounded-t-box px-4 py-3 border-b border-base-300">
+  <div class="flex items-center gap-3">
+    <!-- Thumbnail -->
+    <div class="shrink-0">
+      <% if video.thumbnail_url.present? %>
+        <%= link_to video_path(video) do %>
+          <%= image_tag video.thumbnail_url, class: "w-20 h-12 rounded object-cover", alt: "" %>
+        <% end %>
+      <% else %>
+        <%= link_to video_path(video), class: "w-20 h-12 rounded bg-base-300 flex items-center justify-center" do %>
+          <span class="iconify lucide--video size-5 text-base-content/40"></span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Video info -->
+    <div class="flex-1 min-w-0">
+      <div class="font-medium text-sm truncate">
+        <%= link_to video.title&.truncate(80) || "Untitled", video_path(video), class: "link link-hover" %>
+      </div>
+      <div class="flex items-center gap-1.5 text-xs text-base-content/50 mt-0.5 flex-wrap">
+        <% if video.channel %>
+          <%= link_to "https://www.youtube.com/channel/#{video.channel.youtube_channel_id}",
+                      target: "_blank",
+                      class: "link link-hover truncate" do %>
+            <%= video.channel.name %>
+          <% end %>
+        <% end %>
+        <% if video.view_count.to_i > 0 %>
+          <span class="text-base-content/30">&middot;</span>
+          <span class="flex items-center gap-1">
+            <span class="iconify lucide--eye size-3"></span>
+            <%= number_to_human(video.view_count, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+          </span>
+        <% end %>
+        <% if video.like_count.to_i > 0 %>
+          <span class="text-base-content/30">&middot;</span>
+          <span class="flex items-center gap-1">
+            <span class="iconify lucide--thumbs-up size-3"></span>
+            <%= number_to_human(video.like_count, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+          </span>
+        <% end %>
+        <span class="text-base-content/30">&middot;</span>
+        <span class="flex items-center gap-1">
+          <span class="iconify lucide--message-circle size-3"></span>
+          <%= pluralize(comments.size, "comment") %> on this page
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

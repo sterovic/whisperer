@@ -1,0 +1,5 @@
+<div id="comments_list" class="space-y-3">
+  <% comments.each do |comment| %>
+    <%= render "comments/comment_card", comment: comment, view_mode: "flat" %>
+  <% end %>
+</div>

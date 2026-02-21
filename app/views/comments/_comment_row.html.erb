@@ -90,12 +90,8 @@
     </div>
   </td>
   <td class="text-center whitespace-nowrap" style="overflow: visible;">
-    <%
-      snapshot_data = comment.snapshots.order(:created_at)
-                             .select(:rank, :video_views, :like_count, :reach, :created_at)
-                             .map { |s| { rank: s.rank, video_views: s.video_views, like_count: s.like_count, reach: s.reach, created_at: s.created_at.iso8601 } }
-      total = comment.total_reach || 0
-    %>
+    <% snapshot_data = reach_chart_data(comment) %>
+    <% total = comment.total_reach || 0 %>
     <%# snapshot_data = comment.mock_snapshot_data %>
     <%# total = snapshot_data.sum { |s| s[:reach] } %>
     <div id="reach_chart_<%= comment.id %>"

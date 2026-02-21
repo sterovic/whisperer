@@ -1,0 +1,215 @@
+<% view_mode = local_assigns[:view_mode] || "flat" %>
+<div id="comment_<%= comment.id %>" class="bg-base-100 rounded-box border z-1 border-base-300 p-4 group hover:border-base-content/20 transition-colors" data-controller="collapsible" data-collapsible-expanded-value="false">
+  <!-- Video info (flat mode only) -->
+  <% if view_mode == "flat" && comment.video %>
+    <div class="flex items-center gap-2.5 mb-3">
+      <div class="shrink-0">
+        <% if comment.video.thumbnail_url.present? %>
+          <%= link_to video_path(comment.video) do %>
+            <%= image_tag comment.video.thumbnail_url, class: "w-16 h-10 rounded object-cover", alt: "" %>
+          <% end %>
+        <% else %>
+          <%= link_to video_path(comment.video), class: "w-16 h-10 rounded bg-base-300 flex items-center justify-center" do %>
+            <span class="iconify lucide--video size-4 text-base-content/40"></span>
+          <% end %>
+        <% end %>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium truncate">
+          <%= link_to video_path(comment.video), class: "link link-hover" do %>
+            <%= comment.video.title&.truncate(70) || "Untitled" %>
+          <% end %>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-base-content/50 mt-0.5 flex-wrap">
+          <% if comment.video.channel %>
+            <%= link_to "https://www.youtube.com/channel/#{comment.video.channel.youtube_channel_id}",
+                        target: "_blank",
+                        class: "link link-hover truncate" do %>
+              <%= comment.video.channel.name %>
+            <% end %>
+          <% end %>
+          <% if comment.video.view_count.to_i > 0 %>
+            <span class="text-base-content/30">&middot;</span>
+            <span class="flex items-center gap-1">
+              <span class="iconify lucide--eye size-3"></span>
+              <%= number_to_human(comment.video.view_count, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+            </span>
+          <% end %>
+          <% if comment.video.like_count.to_i > 0 %>
+            <span class="text-base-content/30">&middot;</span>
+            <span class="flex items-center gap-1">
+              <span class="iconify lucide--thumbs-up size-3"></span>
+              <%= number_to_human(comment.video.like_count, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Author row (de-emphasized) -->
+  <div class="flex items-center gap-2 mb-2 <%= view_mode == 'flat' ? 'pl-[74px]' : '' %>">
+    <div class="shrink-0">
+      <% if comment.author_avatar_url.present? %>
+        <%= image_tag comment.author_avatar_url, referrerpolicy: "no-referrer", class: "w-5 h-5 rounded-full", alt: "" %>
+      <% elsif comment.google_account&.avatar_url.present? %>
+        <%= image_tag comment.google_account.avatar_url, referrerpolicy: "no-referrer", class: "w-5 h-5 rounded-full", alt: "" %>
+      <% else %>
+        <div class="w-5 h-5 rounded-full bg-base-200 flex items-center justify-center">
+          <span class="iconify lucide--user size-2.5 text-base-content/50"></span>
+        </div>
+      <% end %>
+    </div>
+    <span class="text-xs text-base-content/60 truncate"><%= author_display_name(comment) %></span>
+    <span class="text-base-content/30">&middot;</span>
+    <span class="text-xs text-base-content/40" title="<%= comment.created_at.strftime('%b %d, %Y %H:%M') %>">
+      <%= time_ago_in_words(comment.created_at) %> ago
+    </span>
+    <div class="flex items-center gap-1.5 ml-auto">
+      <!-- Appearance badge -->
+      <% badge_class = case comment.appearance
+                       when "top" then "badge-success"
+                       when "newest" then "badge-warning"
+                       when "removed" then "badge-error"
+                       when "pending_check" then "badge-info"
+                       else "badge-ghost"
+                       end %>
+      <span class="badge badge-outline badge-sm <%= badge_class %> whitespace-nowrap"><%= comment.appearance %></span>
+
+      <!-- Rank badge -->
+      <% if comment.rank.present? %>
+        <% rank_badge_class = if comment.rank <= 3
+                                "badge-primary"
+                              elsif comment.rank <= 10
+                                "badge-info"
+                              else
+                                "badge-ghost"
+                              end %>
+        <span class="badge badge-sm <%= rank_badge_class %> whitespace-nowrap">#<%= comment.rank %></span>
+      <% end %>
+
+      <!-- Source badge (admin only) -->
+      <% if defined?(current_user) && current_user&.admin? %>
+        <% post_type_class = case comment.post_type
+                             when "via_api" then "badge-info"
+                             when "via_smm" then "badge-secondary"
+                             when "manual" then "badge-ghost"
+                             else "badge-ghost"
+                             end %>
+        <span class="badge badge-soft badge-sm <%= post_type_class %> gap-1 whitespace-nowrap">
+          <% case comment.post_type %>
+          <% when "via_api" %>
+            <span class="iconify lucide--cloud size-3"></span> API
+          <% when "via_smm" %>
+            <span class="iconify lucide--share-2 size-3"></span> SMM
+          <% when "manual" %>
+            <span class="iconify lucide--pen size-3"></span> Manual
+          <% else %>
+            <span class="iconify lucide--help-circle size-3"></span> Unknown
+          <% end %>
+        </span>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Body: Full comment text -->
+  <div class="text-sm mb-3 <%= view_mode == 'flat' ? 'pl-[74px]' : '' %>">
+    <%= comment.text %>
+  </div>
+
+  <!-- Bottom row: Likes, reach, replies, actions -->
+  <div class="flex items-center gap-4 <%= view_mode == 'flat' ? 'pl-[74px]' : '' %>">
+    <!-- Likes -->
+    <div class="flex items-center gap-1 text-sm text-base-content/60">
+      <span class="iconify lucide--thumbs-up size-3.5"></span>
+      <span class="<%= comment.like_count.to_i > 0 ? 'font-medium text-base-content' : '' %>">
+        <%= comment.like_count || 0 %>
+      </span>
+    </div>
+
+    <!-- Reach sparkline -->
+    <% snapshot_data = reach_chart_data(comment) %>
+    <% total = comment.total_reach || 0 %>
+    <div id="reach_chart_<%= comment.id %>"
+         data-controller="reach-chart"
+         data-reach-chart-snapshots-value="<%= snapshot_data.to_json %>"
+         class="relative inline-flex items-center gap-1.5">
+      <div data-reach-chart-target="chart"></div>
+      <span class="text-xs text-base-content/50">
+        <%= number_to_human(total, precision: 2, significant: true, format: "%n%u", units: { thousand: "K", million: "M" }) %>
+      </span>
+      <div data-reach-chart-target="tooltip"
+           class="invisible opacity-0 transition-opacity duration-150 fixed z-[9999] bg-neutral text-neutral-content rounded-lg px-2.5 py-1.5 shadow-lg pointer-events-none whitespace-nowrap">
+      </div>
+    </div>
+
+    <!-- Replies toggle -->
+    <% if comment.replies.any? %>
+      <button type="button"
+              class="text-xs text-primary/70 hover:text-primary flex items-center gap-1 cursor-pointer transition-colors"
+              data-action="click->collapsible#toggle"
+              data-collapsible-target="trigger">
+        <span class="iconify lucide--chevron-right size-3 transition-transform" data-collapsible-target="icon"></span>
+        <span class="iconify lucide--message-circle size-3"></span>
+        <%= pluralize(comment.replies.size, "reply") %>
+      </button>
+    <% end %>
+
+    <!-- Hover action buttons -->
+    <% if comment.youtube_comment_id.present? %>
+      <div class="ml-auto flex items-center gap-1
+                  opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0
+                  focus-within:opacity-100 focus-within:translate-x-0
+                  transition-all duration-200 ease-out">
+        <%= link_to reply_form_comment_path(comment),
+                    class: "btn btn-ghost btn-xs btn-circle",
+                    data: { turbo_frame: "modal" },
+                    onmouseenter: "showActionTip(this, 'Reply')",
+                    onmouseleave: "hideActionTip()" do %>
+          <span class="iconify lucide--reply size-4"></span>
+        <% end %>
+        <button class="btn btn-ghost btn-xs btn-circle" popovertarget="upvote_pop_<%= comment.id %>" style="anchor-name:--upvote-<%= comment.id %>"
+                onmouseenter="showActionTip(this, 'Upvote via SMM')"
+                onmouseleave="hideActionTip()">
+          <span class="iconify lucide--thumbs-up size-4"></span>
+        </button>
+        <button class="btn btn-ghost btn-xs btn-circle"
+                onmouseenter="showActionTip(this, 'Copy URL')"
+                onmouseleave="hideActionTip()"
+                onclick="
+                navigator.clipboard.writeText('https://www.youtube.com/watch?v=<%= comment.video&.youtube_id %>&lc=<%= comment.youtube_comment_id %>');
+                  showActionTip(this, 'Copied!');
+                  setTimeout(() => showActionTip(this, 'Copy URL'), 1500);
+                ">
+          <span class="iconify lucide--link size-4"></span>
+        </button>
+        <%= link_to "https://www.youtube.com/watch?v=#{comment.video&.youtube_id}&lc=#{comment.youtube_comment_id}",
+                    target: "_blank",
+                    class: "btn btn-ghost btn-xs btn-circle",
+                    onmouseenter: "showActionTip(this, 'Open on YouTube')",
+                    onmouseleave: "hideActionTip()" do %>
+          <span class="iconify lucide--external-link size-4"></span>
+        <% end %>
+      </div>
+      <div class="dropdown dropdown-end card card-compact w-52 p-2 shadow bg-base-100 border border-base-300"
+           popover id="upvote_pop_<%= comment.id %>" style="position-anchor:--upvote-<%= comment.id %>">
+        <%= form_with url: upvote_comment_path(comment), method: :post, class: "flex flex-col gap-2" do |f| %>
+          <label class="text-xs font-medium">Add likes via SMM</label>
+          <input type="number" name="quantity" value="10" min="1" class="input input-sm input-bordered w-full"/>
+          <button type="submit" class="btn btn-sm btn-primary">Order</button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Collapsible replies -->
+  <% if comment.replies.any? %>
+    <div data-collapsible-target="content" class="hidden mt-3 <%= view_mode == 'flat' ? 'ml-[74px]' : '' %> border-l-2 border-primary/20">
+      <div class="divide-y divide-base-200/60">
+        <% comment.replies.ordered.each do |reply| %>
+          <%= render partial: "comments/reply_row", locals: { reply: reply } %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

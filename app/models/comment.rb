@@ -54,24 +54,6 @@ class Comment < ApplicationRecord
     )
   end
 
-  # TODO: Remove once real snapshots are flowing
-  def mock_snapshot_data(count: 12)
-    rng = Random.new(id || 0) # stable per-comment so it doesn't change on reload
-    video_views = rng.rand(1_000..50_000)
-    likes = rng.rand(0..20)
-    rank = rng.rand(1..15)
-
-    count.times.map do |i|
-      view_delta = rng.rand(500..5_000)
-      video_views += view_delta
-      likes += rng.rand(0..3)
-      rank = (rank + rng.rand(-2..2)).clamp(1, 30)
-      reach = CommentReachCalculator.calculate(view_delta: view_delta, position: rank)
-
-      { rank: rank, video_views: video_views, like_count: likes, reach: reach, created_at: (count - i).hours.ago.iso8601 }
-    end
-  end
-
   def broadcast_stream_name
     "project_#{project_id}_comments"
   end
@@ -86,8 +68,8 @@ class Comment < ApplicationRecord
     broadcast_replace_to(
       broadcast_stream_name,
       target: dom_id_for_comment,
-      partial: "comments/comment_row",
-      locals: { comment: self }
+      partial: "comments/comment_card",
+      locals: { comment: self, view_mode: "flat" }
     )
   end
 
@@ -96,9 +78,9 @@ class Comment < ApplicationRecord
 
     broadcast_prepend_to(
       broadcast_stream_name,
-      target: "comments_table_body",
-      partial: "comments/comment_row",
-      locals: { comment: self }
+      target: "comments_list",
+      partial: "comments/comment_card",
+      locals: { comment: self, view_mode: "flat" }
     )
   end
 

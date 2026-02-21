@@ -24,6 +24,34 @@
           <% end %>
         </p>
       </div>
+      <% if current_project && @status_check_schedule %>
+        <div class="flex items-center gap-2 text-sm shrink-0" id="last_update_info">
+          <span class="iconify lucide--refresh-cw size-4 text-base-content/40"></span>
+          <% if @status_check_schedule.last_run_at %>
+            <span class="text-base-content/50">
+              Updated <%= time_ago_in_words(@status_check_schedule.last_run_at) %> ago
+            </span>
+          <% elsif @status_check_schedule.enabled? %>
+            <span class="text-base-content/50">Check scheduled</span>
+          <% else %>
+            <span class="text-base-content/40">Never checked</span>
+          <% end %>
+          <span class="text-base-content/20">&middot;</span>
+          <%= button_to run_now_job_schedule_path(@status_check_schedule),
+                        method: :post,
+                        class: "link link-primary text-sm",
+                        data: { turbo: false } do %>
+            Refresh now
+          <% end %>
+          <% if @status_check_schedule.enabled? %>
+            <span class="text-base-content/20">&middot;</span>
+            <span class="text-xs text-success/70">every <%= @status_check_schedule.interval_minutes %> min</span>
+          <% else %>
+            <span class="text-base-content/20">&middot;</span>
+            <%= link_to "Configure", jobs_path, class: "link text-xs text-base-content/50" %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   </div>
 
@@ -46,6 +74,7 @@
   <% else %>
     <!-- Filter Bar -->
     <%= form_with url: comments_path, method: :get, data: { turbo_frame: "_top" }, class: "mb-4" do %>
+      <%= hidden_field_tag :view, view_mode %>
       <div class="bg-base-100 rounded-box border border-base-300 p-4">
         <div class="flex flex-wrap items-center gap-3">
           <!-- Search -->
@@ -76,16 +105,18 @@
                          class: "select select-sm select-bordered",
                          onchange: "this.form.requestSubmit()" %>
 
-          <!-- Source -->
-          <%= select_tag :source,
-                         options_for_select([
-                                              ["All Sources", ""],
-                                              ["API", "via_api"],
-                                              ["SMM", "via_smm"],
-                                              ["Manual", "manual"]
-                                            ], params[:source]),
-                         class: "select select-sm select-bordered",
-                         onchange: "this.form.requestSubmit()" %>
+          <!-- Source (admin only) -->
+          <% if current_user.admin? %>
+            <%= select_tag :source,
+                           options_for_select([
+                                                ["All Sources", ""],
+                                                ["API", "via_api"],
+                                                ["SMM", "via_smm"],
+                                                ["Manual", "manual"]
+                                              ], params[:source]),
+                           class: "select select-sm select-bordered",
+                           onchange: "this.form.requestSubmit()" %>
+          <% end %>
 
           <!-- Video -->
           <%= select_tag :video_id,
@@ -130,9 +161,25 @@
                            onchange: "this.form.requestSubmit()" %>
           </div>
 
+          <!-- View Mode Toggle -->
+          <div class="flex items-center border-l border-base-300 pl-3">
+            <div class="join">
+              <button type="submit" name="view" value="flat"
+                      class="join-item btn btn-xs <%= view_mode == 'flat' ? 'btn-active' : 'btn-ghost' %>"
+                      onclick="document.querySelector('input[name=view]').value='flat'">
+                <span class="iconify lucide--list size-4"></span>
+              </button>
+              <button type="submit" name="view" value="grouped"
+                      class="join-item btn btn-xs <%= view_mode == 'grouped' ? 'btn-active' : 'btn-ghost' %>"
+                      onclick="document.querySelector('input[name=view]').value='grouped'">
+                <span class="iconify lucide--layout-grid size-4"></span>
+              </button>
+            </div>
+          </div>
+
           <!-- Clear Filters -->
           <% if any_filters_active? %>
-            <%= link_to comments_path, class: "btn btn-ghost btn-sm gap-1 text-base-content/60" do %>
+            <%= link_to comments_path(view: view_mode), class: "btn btn-ghost btn-sm gap-1 text-base-content/60" do %>
               <span class="iconify lucide--x size-4"></span>
               Clear
             <% end %>
@@ -140,44 +187,6 @@
         </div>
       </div>
     <% end %>
-
-    <!-- Last Update Info -->
-    <div class="bg-base-100 rounded-box border border-base-300 p-4 mb-4" id="last_update_info">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <span class="iconify lucide--refresh-cw size-5 text-base-content/60 shrink-0"></span>
-          <div>
-            <span class="text-sm font-medium">Status Check</span>
-            <% if @status_check_schedule&.last_run_at %>
-              <span class="text-sm text-base-content/60 ml-2">
-                Last updated <%= time_ago_in_words(@status_check_schedule.last_run_at) %> ago
-              </span>
-            <% elsif @status_check_schedule&.enabled? %>
-              <span class="text-sm text-info ml-2">Check scheduled</span>
-            <% else %>
-              <span class="text-sm text-base-content/40 ml-2">Never checked</span>
-            <% end %>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <% if @status_check_schedule&.enabled? %>
-            <span class="badge badge-success badge-sm gap-1 whitespace-nowrap">
-              <span class="iconify lucide--check size-3 shrink-0"></span>
-              Auto-updating every <%= @status_check_schedule.interval_minutes %> min
-            </span>
-          <% else %>
-            <span class="badge badge-ghost badge-sm gap-1 whitespace-nowrap">
-              <span class="iconify lucide--pause-circle size-3 shrink-0"></span>
-              Auto-update disabled
-            </span>
-            <%= link_to jobs_path, class: "btn btn-xs btn-outline gap-1 whitespace-nowrap" do %>
-              <span class="iconify lucide--settings size-3 shrink-0"></span>
-              Configure
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-    </div>
 
     <% if @comments.empty? %>
       <!-- No Results for current filters -->
@@ -191,45 +200,12 @@
         <% end %>
       </div>
     <% else %>
-      <!-- Comments Table -->
-      <div class="bg-base-100 rounded-box border border-base-300 overflow-x-auto">
-        <table class="table table-zebra w-full">
-          <thead>
-          <tr class="bg-base-200/60">
-            <th class="w-1/4 text-xs uppercase tracking-wider text-base-content/50 font-medium">Comment</th>
-            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Video</th>
-            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Posted As</th>
-            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium text-center">Source</th>
-            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">
-              <div class="flex items-center gap-1">
-                Appearance
-                <span class="iconify lucide--info size-3.5 text-base-content/40 cursor-help"
-                      onmouseenter="
-                      let t = document.getElementById('appearance_tip');
-                        let r = this.getBoundingClientRect();
-                        t.style.left = (r.left + r.width / 2) + 'px';
-                        t.style.top = (r.bottom + 6) + 'px';
-                        t.classList.remove('invisible', 'opacity-0');
-                        t.classList.add('opacity-100');
-                      "
-                      onmouseleave="
-                      let t = document.getElementById('appearance_tip');
-                        t.classList.add('invisible', 'opacity-0');
-                        t.classList.remove('opacity-100');
-                      "></span>
-              </div>
-            </th>
-            <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Likes</th>
-            <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Reach</th>
-            <th class="text-center text-xs uppercase tracking-wider text-base-content/50 font-medium">Rank</th>
-            <th class="text-xs uppercase tracking-wider text-base-content/50 font-medium">Posted</th>
-          </tr>
-          </thead>
-          <% @comments.each do |comment| %>
-            <%= render "comments/comment_row", comment: comment %>
-          <% end %>
-        </table>
-      </div>
+      <!-- Comments List -->
+      <% if view_mode == "grouped" %>
+        <%= render "comments/grouped_list", grouped_comments: @grouped_comments %>
+      <% else %>
+        <%= render "comments/flat_list", comments: @comments %>
+      <% end %>
 
       <!-- Pagination -->
       <div class="mt-6 flex justify-center">
@@ -243,15 +219,6 @@
 <% if current_project %>
   <%= turbo_stream_from "project_#{current_project.id}_comments" %>
 <% end %>
-
-<!-- Fixed tooltip for Appearance header -->
-<div id="appearance_tip"
-     class="invisible opacity-0 transition-opacity duration-150 fixed z-[9999] bg-neutral text-neutral-content rounded-lg px-3 py-2 shadow-lg pointer-events-none max-w-xs text-xs -translate-x-1/2"
-     style="line-height: 1.4;">
-  YouTube sorts comments in two ways: <b>Top</b> (default algorithmic ranking) and <b>Newest</b> (chronological). A
-  comment appearing in Top has higher visibility.
-  <div class="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-neutral rotate-45"></div>
-</div>
 
 <!-- Fixed tooltip for row actions -->
 <div id="action_tip"

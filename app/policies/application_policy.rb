@@ -34,6 +34,18 @@ class ApplicationPolicy
     true
   end
 
+  def method_missing(method_name, *args)
+    if method_name.to_s.end_with?("?")
+      false
+    else
+      super
+    end
+  end
+
+  def respond_to_missing?(method_name, include_private = false)
+    method_name.to_s.end_with?("?") || super
+  end
+
   private
 
   def admin?

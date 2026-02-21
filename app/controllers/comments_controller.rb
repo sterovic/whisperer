@@ -9,15 +9,18 @@ class CommentsController < ApplicationController
     return if current_project.nil?
 
     @has_comments = current_project.comments.top_level.exists?
+    @view_mode = params[:view].presence_in(%w[flat grouped]) || "flat"
 
     scope = current_project.comments
                            .top_level
-                           .includes(:video, :google_account, :replies, :snapshots)
+                           .includes(video: :channel)
+                           .includes(:google_account, :replies, :snapshots)
 
     scope = filter_comments(scope)
     scope = sort_comments(scope)
 
     @comments = scope.page(params[:page]).per(20)
+    @grouped_comments = @comments.group_by(&:video) if @view_mode == "grouped"
     @videos = current_project.videos.order(:title)
     @channels = current_project.channels.order(:name)
     @status_check_schedule = JobSchedule.find_by(job_class: "CommentStatusCheckJob", project_id: current_project&.id)
@@ -136,7 +139,11 @@ class CommentsController < ApplicationController
       (params[:sort].present? && params[:sort] != "newest")
   end
 
-  helper_method :current_project, :any_filters_active?
+  helper_method :current_project, :any_filters_active?, :view_mode
+
+  def view_mode
+    @view_mode || "flat"
+  end
 
   def filter_comments(scope)
     scope = scope.where(appearance: params[:appearance]) if params[:appearance].present? && Comment.appearances.key?(params[:appearance])
